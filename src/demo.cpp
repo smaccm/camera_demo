@@ -68,8 +68,8 @@ int main(int argc, char * argv[])
     return pixy_init_status;
   }
   
-  printf("Starting camera\n");
-  pixy_command("runprogArg", UINT8(8), UINT32(0), END, &response, END);
+  printf("Resetting camera\n");
+  pixy_command("stop", END, &response, END);
 
   printf("Starting camera tracking\n");
   while (1) {
