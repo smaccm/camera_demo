@@ -10,21 +10,18 @@ LIBS=$(LIB_INCLUDES) -lusb-1.0 -lboost_chrono -lboost_system -lboost_thread
 
 all: demo
 
-demo: chirp.o chirpreceiver.o hello_pixy.o pixy.o pixyinterpreter.o usblink.o timer.o
-	$(CC) chirp.o chirpreceiver.o hello_pixy.o timer.o\
+demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o usblink.o timer.o
+	$(CC) chirp.o chirpreceiver.o demo.o timer.o\
           pixy.o pixyinterpreter.o usblink.o $(LIBS) -o demo
 
-pixy-lib: hello_pixy.o
-	$(CC) hello_pixy.o -L/home/rockwell/pixy/build/libpixyusb/ -lpixyusb $(LIBS) -o pixy-lib
-	
 chirp.o:
 	$(CC) $(CFLAGS) chirp.cpp
 
 chirpreceiver.o:
 	$(CC) $(CFLAGS) chirpreceiver.cpp
 
-hello_pixy.o:
-	$(CC) $(CFLAGS) hello_pixy.cpp
+demo.o:
+	$(CC) $(CFLAGS) demo.cpp
 
 pixy.o:
 	$(CC) $(CFLAGS) pixy.cpp
