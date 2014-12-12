@@ -19,18 +19,84 @@
 #include <signal.h>
 #include <string.h>
 #include "pixy.h"
+#include "pixyinterpreter.hpp"
+#include "bitmap_image.hpp"
 
 #define BLOCK_BUFFER_SIZE    25
 
 // Pixy Block buffer // 
 struct Block blocks[BLOCK_BUFFER_SIZE];
-
+extern PixyInterpreter interpreter;
 void handle_SIGINT(int unused)
 {
   // On CTRL+C - abort! //
 
   printf("\nBye!\n");
   exit(0);
+}
+
+inline void interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b)
+{
+    if (y&1)
+    {
+        if (x&1)
+        {
+            r = *pixel;
+            g = (*(pixel-1)+*(pixel+1)+*(pixel+width)+*(pixel-width))>>2;
+            b = (*(pixel-width-1)+*(pixel-width+1)+*(pixel+width-1)+*(pixel+width+1))>>2;
+        }
+        else
+        {
+            r = (*(pixel-1)+*(pixel+1))>>1;
+            g = *pixel;
+            b = (*(pixel-width)+*(pixel+width))>>1;
+        }
+    }
+    else
+    {
+        if (x&1)
+        {
+            r = (*(pixel-width)+*(pixel+width))>>1;
+            g = *pixel;
+            b = (*(pixel-1)+*(pixel+1))>>1;
+        }
+        else
+        {
+            r = (*(pixel-width-1)+*(pixel-width+1)+*(pixel+width-1)+*(pixel+width+1))>>2;
+            g = (*(pixel-1)+*(pixel+1)+*(pixel+width)+*(pixel-width))>>2;
+            b = *pixel;
+        }
+    }
+}
+
+int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t ** lines, image_drawer * drawer)
+{
+    uint16_t x, y;
+    uint32_t *line;
+    uint32_t r, g, b;
+
+    // skip first line
+    frame += width;
+
+    // don't render top and bottom rows, and left and rightmost columns because of color
+    // interpolation
+    //QImage img(width-2, height-2, QImage::Format_RGB32);
+
+    for (y=1; y<height-1; y++)
+    {
+        line = (unsigned int *)lines[y-1];
+        frame++;
+        for (x=1; x<width-1; x++, frame++)
+        {
+            interpolateBayer(width, x, y, frame, r, g, b);
+            *line++ = (0x40<<24) | (r<<16) | (g<<8) | (b<<0);
+            drawer->pen_color((char)r,(char)g,(char)b);            
+            drawer->plot_pixel(x,y);
+        }
+        frame++;
+    }
+
+    return 0;
 }
 
 int main(int argc, char * argv[])
@@ -115,46 +181,50 @@ int main(int argc, char * argv[])
     pixy_command("cam_setAWB", 0x01, 0, 0, &response, 0);
   }
 
-  printf("Detecting blocks...\n");
+  int32_t response;
+  uint32_t fourcc;
+  int8_t renderflags;
+  uint16_t width, height;
+  uint32_t numPixels;
+  uint8_t * pixels = (uint8_t *)malloc(320*200*sizeof(uint8_t));
 
-  for(;;)
-  {
-    // Get blocks from Pixy //
-    blocks_copied = pixy_get_blocks(BLOCK_BUFFER_SIZE, &blocks[0]);
+  int return_value = pixy_command("cam_getFrame", // String id for remote procedure
+    0x01, 0x21, // mode
+    0x02, 0, // X-offset
+    0x02, 0, // Y-offset
+    0x02, 320, // width
+    0x02, 200, // height
+    END, // separator
+    &response, // pointer to the memory address for return value
+    &fourcc,
+    &renderflags,
+    &width,
+    &height,
+    &numPixels,
+    &pixels, // pointer to memory address for returned frame
+    END);
 
-    if(blocks_copied < 0) {
-      // Error: pixy_get_blocks //
-      printf("pixy_get_blocks(): ");
-      pixy_error(blocks_copied);
-      usleep(250000);
-    }
+  printf("return value: %d\n", return_value);
+  printf("response value :%d\n", response);
+  printf("num pixels: %d\n", numPixels);
 
-    // Display received blocks //
-    for(index = 0; index != blocks_copied; ++index) {
-
-      switch (blocks[index].type) {
-        case TYPE_NORMAL:
-          printf("[sig:%2u w:%3u h:%3u x:%3u y:%3u]\n",
-                 blocks[index].signature,
-                 blocks[index].width,
-                 blocks[index].height,
-                 blocks[index].x,
-                 blocks[index].y);
-        break;
-
-        case TYPE_COLOR_CODE:
-          printf("[sig:%2u w:%3u h:%3u x:%3u y:%3u ang:%3i]\n",
-                 blocks[index].signature,
-                 blocks[index].width,
-                 blocks[index].height,
-                 blocks[index].x,
-                 blocks[index].y,
-                 blocks[index].angle);
-        break;
-      }
-    }
-
-    // Sleep for 1/10 sec //
-    usleep(100000);
+  uint32_t ** lines = (uint32_t **)malloc(200*sizeof(uint32_t *));
+  int n;
+  
+  for(n = 0; n < 200; n++){
+    lines[n] = (uint32_t *)malloc(320*sizeof(uint32_t));
   }
+
+  bitmap_image image(320,200);
+  image_drawer draw(image);
+
+  renderBA81(320, 200, pixels, lines, &draw);
+
+  image.save_image("output.bmp");
+  usleep(100000);
+
 }
+
+
+
+

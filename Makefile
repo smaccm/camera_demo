@@ -14,25 +14,27 @@ demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o usblink.o timer.o
 	$(CC) chirp.o chirpreceiver.o demo.o timer.o\
           pixy.o pixyinterpreter.o usblink.o $(LIBS) -o demo
 
-chirp.o:
+chirp.o: chirp.cpp
 	$(CC) $(CFLAGS) chirp.cpp
 
-chirpreceiver.o:
+chirpreceiver.o: chirpreceiver.cpp
 	$(CC) $(CFLAGS) chirpreceiver.cpp
 
-demo.o:
+demo.o: demo.cpp
 	$(CC) $(CFLAGS) demo.cpp
 
-pixy.o:
+pixy.o: pixy.cpp
 	$(CC) $(CFLAGS) pixy.cpp
 
-pixyinterpreter.o:
+pixyinterpreter.o: pixyinterpreter.cpp
 	$(CC) $(CFLAGS) pixyinterpreter.cpp
 
-usblink.o:
+usblink.o: usblink.cpp
 	$(CC) $(CFLAGS) usblink.cpp
-timer.o:
+
+timer.o: utils/timer.cpp
 	$(CC) $(CFLAGS) utils/timer.cpp
+
 clean:
 	rm -f *.o; \
 	rm -f demo
