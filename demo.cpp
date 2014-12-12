@@ -18,9 +18,13 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <iostream>
+#include <boost/asio.hpp>
 #include "pixy.h"
 #include "pixyinterpreter.hpp"
 #include "bitmap_image.hpp"
+
+using boost::asio::ip::tcp;
 
 #define BLOCK_BUFFER_SIZE    25
 
@@ -69,12 +73,13 @@ inline void interpolateBayer(unsigned int width, unsigned int x, unsigned int y,
     }
 }
 
-int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t ** lines, image_drawer * drawer)
+int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t ** lines, bitmap_image &image)
 {
     uint16_t x, y;
     uint32_t *line;
     uint32_t r, g, b;
 
+    image_drawer drawer(image);
     // skip first line
     frame += width;
 
@@ -90,8 +95,8 @@ int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t ** line
         {
             interpolateBayer(width, x, y, frame, r, g, b);
             *line++ = (0x40<<24) | (r<<16) | (g<<8) | (b<<0);
-            drawer->pen_color((char)r,(char)g,(char)b);            
-            drawer->plot_pixel(x,y);
+            drawer.pen_color((char)r,(char)g,(char)b);            
+            drawer.plot_pixel(x,y);
         }
         frame++;
     }
@@ -105,11 +110,39 @@ int main(int argc, char * argv[])
   int      blocks_copied;
   int      pixy_init_status;
 
+  if(argc != 2){
+    std::cerr << "Usage: demo <port>" << std::endl;
+      return 1;
+  }
+
   // Catch CTRL+C (SIGINT) signals //
   signal(SIGINT, handle_SIGINT);
 
   printf("Hello Pixy:\n libpixyusb Version: %s\n", __LIBPIXY_VERSION__);
 
+  //setup the socket for sending pictures
+  boost::asio::io_service io_service;
+  tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), atoi(argv[1])));
+
+  int32_t response;
+  uint32_t fourcc;
+  int8_t renderflags;
+  uint16_t width, height, sentWidth, sentHeight;
+  uint32_t numPixels;
+
+  sentWidth = 320;
+  sentHeight = 200;
+  uint8_t * pixels = (uint8_t *)malloc(sentWidth*sentHeight*sizeof(uint8_t));
+
+  uint32_t ** lines = (uint32_t **)malloc(sentHeight*sizeof(uint32_t *));
+  
+  int n;
+  for(n = 0; n < sentHeight; n++){
+    lines[n] = (uint32_t *)malloc(sentWidth*sizeof(uint32_t));
+  }
+
+  bitmap_image image(sentWidth, sentHeight);
+  
   // Connect to Pixy //
   pixy_init_status = pixy_init();
 
@@ -123,108 +156,55 @@ int main(int argc, char * argv[])
     return pixy_init_status;
   }
 
-  // Request Pixy firmware version //
-  {
-    uint16_t major;
-    uint16_t minor;
-    uint16_t build;
-    int      return_value;
+  for(;;){
 
-    return_value = pixy_get_firmware_version(&major, &minor, &build);
+    int return_value = pixy_command("cam_getFrame", // String id for remote procedure
+      0x01, 0x21, // mode
+      0x02, 0, // X-offset
+      0x02, 0, // Y-offset
+      0x02, 320, // width
+      0x02, 200, // height
+      END, // separator
+      &response, // pointer to the memory address for return value
+      &fourcc,
+      &renderflags,
+      &width,
+      &height,
+      &numPixels,
+      &pixels, // pointer to memory address for returned frame
+      END);
 
-    if (return_value) {
-      // Error //
-      printf("Failed to retrieve Pixy firmware version. ");
-      pixy_error(return_value);
+    printf("return value: %d\n", return_value);
+    printf("response value :%d\n", response);
+    printf("num pixels: %d\n", numPixels);
+    
+    renderBA81(width, height, pixels, lines, image);
 
-      return return_value;
-    } else {
-      // Success //
-      printf(" Pixy Firmware Version: %d.%d.%d\n", major, minor, build);
-    }
+//    try{
+//      tcp::socket socket(io_service);
+//      acceptor.accept(socket);
+//      std::string message = "hello client\n";
+//    
+//      boost::system::error_code ignored_error;
+//      boost::asio::write(socket, boost::asio::buffer(message),
+//        boost::asio::transfer_all(), ignored_error);
+//    }
+//    catch (std::exception& e)
+//    {
+//      std::cerr << e.what() << std::endl;
+//    }
+
+    image.save_image("output.bmp");
+    usleep(1000000);
+     
   }
-
-  // Pixy Command Examples //
-  {
-    int32_t response;
-    int     return_value;
-
-    // Execute remote procedure call "cam_setAWB" with one output (host->pixy) parameter (Value = 1)
-    //
-    //   Parameters:                 Notes:
-    //
-    //   pixy_command("cam_setAWB",  String identifier for remote procedure
-    //                        0x01,  Length (in bytes) of first output parameter
-    //                           1,  Value of first output parameter
-    //                           0,  Parameter list seperator token (See value of: END_OUT_ARGS)
-    //                   &response,  Pointer to memory address for return value from remote procedure call
-    //                           0); Parameter list seperator token (See value of: END_IN_ARGS)
-    //
-
-    // Enable auto white balance //
-    return_value = pixy_command("cam_setAWB", 0x01, 1, 0, &response, 0);
-
-    // Execute remote procedure call "cam_getAWB" with no output (host->pixy) parameters
-    //
-    //   Parameters:                 Notes:
-    //
-    //   pixy_command("cam_setAWB",  String identifier for remote procedure
-    //                           0,  Parameter list seperator token (See value of: END_OUT_ARGS)
-    //                   &response,  Pointer to memory address for return value from remote procedure call
-    //                           0); Parameter list seperator token (See value of: END_IN_ARGS)
-    //
-
-    // Get auto white balance //
-    return_value = pixy_command("cam_getAWB", 0, &response, 0);
-
-    // Set auto white balance back to disabled //
-    pixy_command("cam_setAWB", 0x01, 0, 0, &response, 0);
-  }
-
-  int32_t response;
-  uint32_t fourcc;
-  int8_t renderflags;
-  uint16_t width, height;
-  uint32_t numPixels;
-  uint8_t * pixels = (uint8_t *)malloc(320*200*sizeof(uint8_t));
-
-  int return_value = pixy_command("cam_getFrame", // String id for remote procedure
-    0x01, 0x21, // mode
-    0x02, 0, // X-offset
-    0x02, 0, // Y-offset
-    0x02, 320, // width
-    0x02, 200, // height
-    END, // separator
-    &response, // pointer to the memory address for return value
-    &fourcc,
-    &renderflags,
-    &width,
-    &height,
-    &numPixels,
-    &pixels, // pointer to memory address for returned frame
-    END);
-
-  printf("return value: %d\n", return_value);
-  printf("response value :%d\n", response);
-  printf("num pixels: %d\n", numPixels);
-
-  uint32_t ** lines = (uint32_t **)malloc(200*sizeof(uint32_t *));
-  int n;
-  
-  for(n = 0; n < 200; n++){
-    lines[n] = (uint32_t *)malloc(320*sizeof(uint32_t));
-  }
-
-  bitmap_image image(320,200);
-  image_drawer draw(image);
-
-  renderBA81(320, 200, pixels, lines, &draw);
-
-  image.save_image("output.bmp");
-  usleep(100000);
-
-}
-
-
-
-
+     
+}  
+   
+   
+   
+   
+   
+   
+   
+   

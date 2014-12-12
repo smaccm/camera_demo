@@ -10,6 +10,9 @@ LIBS=$(LIB_INCLUDES) -lusb-1.0 -lboost_chrono -lboost_system -lboost_thread
 
 all: demo
 
+server: server.c
+	$(CC) server.c $(LIBS) -o server
+
 demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o usblink.o timer.o
 	$(CC) chirp.o chirpreceiver.o demo.o timer.o\
           pixy.o pixyinterpreter.o usblink.o $(LIBS) -o demo
