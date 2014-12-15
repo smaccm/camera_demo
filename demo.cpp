@@ -73,7 +73,7 @@ inline void interpolateBayer(unsigned int width, unsigned int x, unsigned int y,
     }
 }
 
-int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t ** lines, bitmap_image &image)
+int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t * lines, bitmap_image &image)
 {
     uint16_t x, y;
     uint32_t *line;
@@ -89,7 +89,7 @@ int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t ** line
 
     for (y=1; y<height-1; y++)
     {
-        line = (unsigned int *)lines[y-1];
+        line = (unsigned int *)(lines + (y-1)*width);
         frame++;
         for (x=1; x<width-1; x++, frame++)
         {
@@ -133,6 +133,7 @@ int main(int argc, char * argv[])
   sentWidth = 320;
   sentHeight = 200;
   uint8_t * pixels = (uint8_t *)malloc(sentWidth*sentHeight*sizeof(uint8_t));
+  uint32_t * processedPixels = (uint32_t *)malloc(sentWidth*sentHeight*sizeof(uint32_t));
 
   uint32_t ** lines = (uint32_t **)malloc(sentHeight*sizeof(uint32_t *));
   
@@ -156,14 +157,23 @@ int main(int argc, char * argv[])
     return pixy_init_status;
   }
 
+  //  tcp::socket socket(io_service);
+  //  acceptor.accept(socket);
+
+  //this is magic. I have no idea why I need to do this but I do
+  pixy_command("runprog", 0x01, 8, END, &response, END);
+  pixy_command("cam_setAWB", 0x01, 1, 0, &response, 0);
+  usleep(1000000);
+  
+  int t = 0;
   for(;;){
 
     int return_value = pixy_command("cam_getFrame", // String id for remote procedure
       0x01, 0x21, // mode
       0x02, 0, // X-offset
       0x02, 0, // Y-offset
-      0x02, 320, // width
-      0x02, 200, // height
+      0x02, sentWidth, // width
+      0x02, sentHeight, // height
       END, // separator
       &response, // pointer to the memory address for return value
       &fourcc,
@@ -174,29 +184,18 @@ int main(int argc, char * argv[])
       &pixels, // pointer to memory address for returned frame
       END);
 
-    printf("return value: %d\n", return_value);
-    printf("response value :%d\n", response);
-    printf("num pixels: %d\n", numPixels);
-    
-    renderBA81(width, height, pixels, lines, image);
+ //   printf("return value: %d\n", return_value);
+ //   printf("response value :%d\n", response);
+ //   printf("num pixels: %d\n", numPixels);
+ //   renderBA81(width, height, pixels, processedPixels, image);
 
-//    try{
-//      tcp::socket socket(io_service);
-//      acceptor.accept(socket);
-//      std::string message = "hello client\n";
-//    
-//      boost::system::error_code ignored_error;
-//      boost::asio::write(socket, boost::asio::buffer(message),
-//        boost::asio::transfer_all(), ignored_error);
-//    }
-//    catch (std::exception& e)
-//    {
-//      std::cerr << e.what() << std::endl;
-//    }
-
-    image.save_image("output.bmp");
-    usleep(1000000);
-     
+ //     boost::system::error_code ignored_error;
+ 	  printf("waiting %d\n", t++);
+//      boost::asio::write(socket, boost::asio::buffer(processedPixels, numPixels*sizeof(uint32_t)),
+  //      boost::asio::transfer_all(), ignored_error);
+    //image.save_image("output.bmp"); 
+  
+    //usleep(1000000);
   }
      
 }  
