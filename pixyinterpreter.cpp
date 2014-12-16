@@ -151,7 +151,8 @@ void PixyInterpreter::interpreter_thread()
     chirp_access_mutex_.unlock();
 
     // Take a break, don't starve other send_command calls. //
-    usleep(50000);
+    //usleep(50000);
+    usleep(10);
   }
 
   thread_dead_ = true;

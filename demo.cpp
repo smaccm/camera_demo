@@ -157,14 +157,18 @@ int main(int argc, char * argv[])
     return pixy_init_status;
   }
 
-  //  tcp::socket socket(io_service);
-  //  acceptor.accept(socket);
+  tcp::socket socket(io_service);
+  //acceptor.accept(socket);
 
   //this is magic. I have no idea why I need to do this but I do
+  printf("running prog\n");
   pixy_command("runprog", 0x01, 8, END, &response, END);
-  pixy_command("cam_setAWB", 0x01, 1, 0, &response, 0);
-  usleep(1000000);
+  printf("sent running prog\n");
+  //pixy_command("cam_setAWB", 0x01, 1, 0, &response, 0);
+  //pixy_command("cam_setMode",0x01, 1, END, &response, END);
+  //usleep(1000000);
   
+  acceptor.accept(socket);
   int t = 0;
   for(;;){
 
@@ -172,8 +176,8 @@ int main(int argc, char * argv[])
       0x01, 0x21, // mode
       0x02, 0, // X-offset
       0x02, 0, // Y-offset
-      0x02, sentWidth, // width
-      0x02, sentHeight, // height
+      0x02, 320, // width
+      0x02, 200, // height
       END, // separator
       &response, // pointer to the memory address for return value
       &fourcc,
@@ -187,12 +191,12 @@ int main(int argc, char * argv[])
  //   printf("return value: %d\n", return_value);
  //   printf("response value :%d\n", response);
  //   printf("num pixels: %d\n", numPixels);
- //   renderBA81(width, height, pixels, processedPixels, image);
+      renderBA81(width, height, pixels, processedPixels, image);
 
- //     boost::system::error_code ignored_error;
+      boost::system::error_code ignored_error;
  	  printf("waiting %d\n", t++);
-//      boost::asio::write(socket, boost::asio::buffer(processedPixels, numPixels*sizeof(uint32_t)),
-  //      boost::asio::transfer_all(), ignored_error);
+      boost::asio::write(socket, boost::asio::buffer(processedPixels, numPixels*sizeof(uint32_t)),
+        boost::asio::transfer_all(), ignored_error);
     //image.save_image("output.bmp"); 
   
     //usleep(1000000);

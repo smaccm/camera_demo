@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "pixy.h"
-#include "pixyinterpreter.hpp"
+#include "smaccminterpreter.hpp"
 
-PixyInterpreter interpreter;
+SmaccmInterpreter interpreter;
 
 // Pixy C API //
 

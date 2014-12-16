@@ -13,9 +13,12 @@ all: demo
 server: server.c
 	$(CC) server.c $(LIBS) -o server
 
-demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o usblink.o timer.o
-	$(CC) chirp.o chirpreceiver.o demo.o timer.o\
-          pixy.o pixyinterpreter.o usblink.o $(LIBS) -o demo
+demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o timer.o
+	$(CC) chirp.o chirpreceiver.o demo.o timer.o \
+          pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o $(LIBS) -o demo
+
+smaccminterpreter.o: smaccminterpreter.cpp
+	$(CC) $(CFLAGS) smaccminterpreter.cpp
 
 chirp.o: chirp.cpp
 	$(CC) $(CFLAGS) chirp.cpp
