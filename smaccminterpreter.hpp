@@ -12,7 +12,7 @@
 #ifndef __SMACCMINTERPRETER_HPP__
 #define __SMACCMINTERPRETER_HPP__
 
-using boost::asio::ip::udp;
+using boost::asio::ip::tcp;
 
 class SmaccmInterpreter : public PixyInterpreter
 {
@@ -21,9 +21,9 @@ class SmaccmInterpreter : public PixyInterpreter
     int init();
   private:
     //socket stuff
-    udp::endpoint remote_endpoint;
     boost::asio::io_service io_service;
-    udp::socket socket;
+    tcp::acceptor acceptor;
+    tcp::socket socket;
 
     //image stuff
     static const int sentWidth = 320;
