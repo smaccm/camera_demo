@@ -1,5 +1,6 @@
 #include "pixyinterpreter.hpp"
 #include <boost/asio.hpp>
+#include  <boost/thread/thread.hpp>
 #include "bitmap_image.hpp"
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,20 +21,25 @@ class SmaccmInterpreter : public PixyInterpreter
     int init();
   private:
     //socket stuff
-    //boost::asio::io_service io_service;
-    //tcp::acceptor acceptor;
-    //tcp::socket socket;
+    boost::asio::io_service io_service;
+    tcp::acceptor acceptor;
+    tcp::socket socket;
 
+    //image stuff
     static const int sentWidth = 320;
     static const int sentHeight = 200;
-    uint8_t pixels[sentWidth*sentHeight];
     uint32_t processedPixels[sentWidth*sentHeight];
-    
+ 
+    boost::mutex imageMutex;  
+    bitmap_image * pImage;
 
     void interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b);
 
-    int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t * lines, bitmap_image &image);
+    int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t * lines, bitmap_image * pImage);
 
+    void interpret_data(void * chirp_data[]);
+
+    void sendFrame(void);
 };
 
 #endif
