@@ -1,14 +1,23 @@
 #include "smaccminterpreter.hpp"
 
 SmaccmInterpreter::SmaccmInterpreter() : 
-  acceptor(io_service, tcp::endpoint(tcp::v4(), 1337)),
-  socket(io_service) {
+  socket(io_service, udp::endpoint(udp::v4(), 1337)){
 
 }
 
 int SmaccmInterpreter::init(){
+
+  boost::array<char, 1> recv_buf;
+  boost::system::error_code error;
+  socket.receive_from(boost::asio::buffer(recv_buf),
+      remote_endpoint, 0, error);
+
+  if (error && error != boost::asio::error::message_size){
+    throw boost::system::system_error(error);
+  }
+
+
   pImage = new bitmap_image(sentWidth, sentHeight);
-  acceptor.accept(socket);
   //start the thread that will be used to send frames
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
   PixyInterpreter::init();
@@ -22,11 +31,11 @@ int SmaccmInterpreter::init(){
 void SmaccmInterpreter::sendFrame(){
   boost::system::error_code ignored_error;
   for(;;){
-    usleep(5000);
+    usleep(50);
     imageMutex.lock();
     //pImage->save_image("output.bmp");
-    boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint32_t)),
-      boost::asio::transfer_all(), ignored_error);
+    socket.send_to(boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint32_t)),
+      remote_endpoint, 0, ignored_error);
     imageMutex.unlock();
   }
 }
