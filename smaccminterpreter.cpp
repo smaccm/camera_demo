@@ -10,7 +10,9 @@ int SmaccmInterpreter::init(){
   pImage = new bitmap_image(sentWidth, sentHeight);
   //set the flag saying we have not captured an image yet
   fNewImage = 0;
+  printf("waiting for client connection...\n");
   acceptor.accept(socket);
+  printf("Client connected!\n");
   socket.set_option(tcp::no_delay(false));
   //start the thread that will be used to send frames
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
@@ -30,6 +32,27 @@ void SmaccmInterpreter::sendFrame(){
       fNewImage = 0;
     }
     imageMutex.unlock();
+    waitForResponse();
+  }
+}
+
+void SmaccmInterpreter::waitForResponse(){
+  boost::array<char, 1> buf;
+  boost::system::error_code error;
+  size_t len = 0;
+
+  len = socket.read_some(boost::asio::buffer(buf), error);
+  if (error == boost::asio::error::eof){
+    printf("Client disconnected. Waiting for reconnect...\n");
+    socket.close();
+    acceptor.accept(socket);
+    printf("Client reconnected!\n");
+    socket.set_option(tcp::no_delay(false));  
+  }else if (error){
+    printf("An error occurred. Waiting for client to reconnect...\n");
+    acceptor.accept(socket);
+    printf("Client reconnected!\n");
+    socket.set_option(tcp::no_delay(false));
   }
 }
 

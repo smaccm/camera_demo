@@ -42,6 +42,7 @@ class SmaccmInterpreter : public PixyInterpreter
     void interpret_data(void * chirp_data[]);
 
     void sendFrame(void);
+    void waitForResponse(void);
 };
 
 #endif
