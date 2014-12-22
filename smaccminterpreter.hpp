@@ -32,6 +32,7 @@ class SmaccmInterpreter : public PixyInterpreter
  
     boost::mutex imageMutex;  
     bitmap_image * pImage;
+    int fNewImage;
 
     void interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b);
 

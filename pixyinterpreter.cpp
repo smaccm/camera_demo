@@ -152,7 +152,7 @@ void PixyInterpreter::interpreter_thread()
 
     // Take a break, don't starve other send_command calls. //
     //usleep(5000);
-    usleep(500);
+    usleep(5000);
   }
 
   thread_dead_ = true;
