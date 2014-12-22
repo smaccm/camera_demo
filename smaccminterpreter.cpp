@@ -15,11 +15,6 @@ int SmaccmInterpreter::init(){
   //start the thread that will be used to send frames
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
   PixyInterpreter::init();
-
- // acceptor = new tcp::acceptor(io_service, tcp::endpoint(tcp::v4(), atoi(argv[1])));
-  //socket(io_service);
-  //acceptor.accept(socket);
-
 }
 
 void SmaccmInterpreter::sendFrame(){
@@ -30,7 +25,7 @@ void SmaccmInterpreter::sendFrame(){
     imageMutex.lock();
     if(fNewImage){
       //pImage->save_image("output" + boost::to_string(i++) + ".bmp");
-      boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint32_t)),
+      boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
         boost::asio::transfer_all(), ignored_error);
       fNewImage = 0;
     }
@@ -73,10 +68,11 @@ void SmaccmInterpreter::interpolateBayer(unsigned int width, unsigned int x, uns
 }
 
 
-int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t * lines, bitmap_image *pImage)
+//with is in pixels not bytes!
+int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint8_t * lines, bitmap_image *pImage)
 {
     uint16_t x, y;
-    uint32_t *line;
+    uint8_t *line;
     uint32_t r, g, b;
     
     //if(imageMutex.try_lock()){
@@ -90,12 +86,15 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
 
       for (y=1; y<height-1; y++)
       {
-          line = (unsigned int *)(lines + (y-1)*width);
+          line = (uint8_t *)(lines + (y-1)*width*3);
           frame++;
           for (x=1; x<width-1; x++, frame++)
           {
               interpolateBayer(width, x, y, frame, r, g, b);
-              *line++ = (0x40<<24) | (r<<16) | (g<<8) | (b<<0);
+              //*line++ = (0x40<<24) | (r<<16) | (g<<8) | (b<<0);
+              *line++ = (uint8_t)r;
+              *line++ = (uint8_t)g;
+              *line++ = (uint8_t)b;
               drawer.pen_color((char)r,(char)g,(char)b);            
               drawer.plot_pixel(x,y);
           }
@@ -112,7 +111,6 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
   uint8_t  chirp_message;
   uint32_t chirp_type;
   static int t = 0;
-  static uint8_t * pPrevFrame = (uint8_t *)malloc(sentWidth*sentHeight*sizeof(uint8_t));
 
   if (chirp_data[0]) {
 
@@ -138,8 +136,7 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
 			assert(height == sentHeight);
 			assert(frame_len = width*height);
 
-			memcpy(pPrevFrame, pFrame, frame_len*sizeof(uint8_t));
-            printf("rendering: %d\n", t++);
+            //printf("rendering: %d\n", t++);
 			
             renderBA81(width, height, pFrame, processedPixels, pImage);
             break;

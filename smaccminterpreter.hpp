@@ -28,7 +28,8 @@ class SmaccmInterpreter : public PixyInterpreter
     //image stuff
     static const int sentWidth = 320;
     static const int sentHeight = 200;
-    uint32_t processedPixels[sentWidth*sentHeight];
+    //r,g,b, each take a byte
+    uint8_t processedPixels[sentWidth*sentHeight*3];
  
     boost::mutex imageMutex;  
     bitmap_image * pImage;
@@ -36,7 +37,7 @@ class SmaccmInterpreter : public PixyInterpreter
 
     void interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b);
 
-    int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint32_t * lines, bitmap_image * pImage);
+    int renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint8_t * lines, bitmap_image * pImage);
 
     void interpret_data(void * chirp_data[]);
 
