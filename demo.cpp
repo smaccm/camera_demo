@@ -33,7 +33,8 @@ void handle_SIGINT(int unused)
   printf("\nBye!\n");
   exit(0);
 }
-
+//defined in pixy.cpp
+extern SmaccmInterpreter interpreter;
 int main(int argc, char * argv[])
 {
   int      index;
@@ -68,7 +69,8 @@ int main(int argc, char * argv[])
 
     return pixy_init_status;
   }
-
+  
+  interpreter.connect();
   //this is magic. I have no idea why I need to do this but I do
   printf("running prog\n");
   pixy_command("runprog", 0x01, 8, END, &response, END);
