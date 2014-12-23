@@ -6,18 +6,18 @@ SmaccmInterpreter::SmaccmInterpreter() :
 
 }
 
-int SmaccmInterpreter::init(){
-  pImage = new bitmap_image(sentWidth, sentHeight);
-  //set the flag saying we have not captured an image yet
-  fNewImage = 0;
-  printf("waiting for client connection...\n");
-  acceptor.accept(socket);
-  printf("Client connected!\n");
-  socket.set_option(tcp::no_delay(false));
-  //start the thread that will be used to send frames
-  boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
-  PixyInterpreter::init();
-}
+//int SmaccmInterpreter::init(){
+//  pImage = new bitmap_image(sentWidth, sentHeight);
+//  //set the flag saying we have not captured an image yet
+//  fNewImage = 0;
+//  printf("waiting for client connection...\n");
+//  acceptor.accept(socket);
+//  printf("Client connected!\n");
+//  socket.set_option(tcp::no_delay(false));
+//  //start the thread that will be used to send frames
+//  boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
+//  PixyInterpreter::init();
+//}
 
 void SmaccmInterpreter::sendFrame(){
   boost::system::error_code ignored_error;

@@ -18,7 +18,7 @@ class SmaccmInterpreter : public PixyInterpreter
 {
   public:
     SmaccmInterpreter();
-    int init();
+//    int init();
   private:
     //socket stuff
     boost::asio::io_service io_service;

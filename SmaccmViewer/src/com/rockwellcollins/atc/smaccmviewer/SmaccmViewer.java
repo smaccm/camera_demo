@@ -19,6 +19,10 @@ import javax.swing.Timer;
 public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 
 	private static final long serialVersionUID = 8302649087754364851L;
+	
+	private final String serverName = "192.168.0.108";
+	private final int port = 1337;
+	
 	private Image i = null;
 	private static final int width = 320;
 	private static final int height = 200;
@@ -39,9 +43,6 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 	}
 
 	public void init() {
-
-		String serverName = "localhost";
-		int port = 1337;
 
 		try {
 			client = new Socket(serverName, port);
