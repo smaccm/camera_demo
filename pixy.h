@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 #include <unistd.h>
-#include <pixydefs.h>
+#include "pixydefs.h"
 
 // Pixy C API //
 
