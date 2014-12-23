@@ -7,7 +7,6 @@ SmaccmInterpreter::SmaccmInterpreter() :
 }
 
 int SmaccmInterpreter::connect(){
-  pImage = new bitmap_image(sentWidth, sentHeight);
   //set the flag saying we have not captured an image yet
   fNewImage = 0;
   printf("waiting for client connection...\n");
@@ -25,7 +24,6 @@ void SmaccmInterpreter::sendFrame(){
     usleep(30000);
     imageMutex.lock();
     if(fNewImage){
-      //pImage->save_image("output" + boost::to_string(i++) + ".bmp");
       boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
         boost::asio::transfer_all(), ignored_error);
       fNewImage = 0;
@@ -91,7 +89,7 @@ void SmaccmInterpreter::interpolateBayer(unsigned int width, unsigned int x, uns
 
 
 //with is in pixels not bytes!
-int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint8_t * lines, bitmap_image *pImage)
+int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint8_t * lines)
 {
     uint16_t x, y;
     uint8_t *line;
@@ -99,7 +97,6 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
     
     //if(imageMutex.try_lock()){
       imageMutex.lock();
-      image_drawer drawer(*pImage);
       // skip first line
       frame += width;
 
@@ -117,8 +114,6 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
               *line++ = (uint8_t)r;
               *line++ = (uint8_t)g;
               *line++ = (uint8_t)b;
-              drawer.pen_color((char)r,(char)g,(char)b);            
-              drawer.plot_pixel(x,y);
           }
           frame++;
       }
@@ -160,7 +155,7 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
 
             //printf("rendering: %d\n", t++);
 			
-            renderBA81(width, height, pFrame, processedPixels, pImage);
+            renderBA81(width, height, pFrame, processedPixels);
             break;
           case FOURCC('C', 'C', 'Q', '1'):
             break;

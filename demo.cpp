@@ -57,6 +57,9 @@ int main(int argc, char * argv[])
   uint16_t width, height, sentWidth, sentHeight;
   uint32_t numPixels;
   
+
+  //wait for client connection
+  interpreter.connect();
   // Connect to Pixy //
   pixy_init_status = pixy_init();
 
@@ -70,7 +73,6 @@ int main(int argc, char * argv[])
     return pixy_init_status;
   }
   
-  interpreter.connect();
   //this is magic. I have no idea why I need to do this but I do
   printf("running prog\n");
   pixy_command("runprog", 0x01, 8, END, &response, END);
