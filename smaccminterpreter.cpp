@@ -8,7 +8,7 @@ SmaccmInterpreter::SmaccmInterpreter() :
 
 int SmaccmInterpreter::connect(){
   //set the flag saying we have not captured an image yet
-  fNewImage = 0;
+  fNewImage = 1;
   printf("waiting for client connection...\n");
   acceptor.accept(socket);
   printf("Client connected!\n");

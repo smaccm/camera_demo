@@ -20,8 +20,8 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 
 	private static final long serialVersionUID = 8302649087754364851L;
 	
-//	private final String serverName = "192.168.0.108";
-	private final String serverName = "localhost";
+	private final String serverName = "192.168.0.108";
+//	private final String serverName = "localhost";
 	private final int port = 1337;
 	
 	private Image i = null;
@@ -65,6 +65,9 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 	public void run() {
 		int[] pixels = new int[width*height*3];
 		byte[] networkBytes = new byte[width*height*3];
+		
+		//on the server side we keep going if anything is received
+		out.println("a"); 
 
 		while(true){
 
