@@ -77,7 +77,7 @@ int main(int argc, char * argv[])
   printf("running prog\n");
   pixy_command("runprog", 0x01, 8, END, &response, END);
   printf("sent running prog\n");
-  pixy_command("cam_setAWB", 0x01, 1, 0, &response, 0);
+  //pixy_command("cam_setAWB", 0x01, 1, 0, &response, 0);
   //pixy_command("cam_setMode",0x01, 1, END, &response, END);
   //usleep(1000000);
   
