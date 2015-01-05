@@ -8,7 +8,6 @@ SmaccmInterpreter::SmaccmInterpreter() :
 
 int SmaccmInterpreter::connect(){
   //set the flag saying we have not captured an image yet
-  fNewImage = 1;
   printf("waiting for client connection...\n");
   acceptor.accept(socket);
   printf("Client connected!\n");
@@ -23,11 +22,8 @@ void SmaccmInterpreter::sendFrame(){
   for(;;){
     //usleep(30000);
     imageMutex.lock();
-    if(fNewImage){
-      boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
-        boost::asio::transfer_all(), ignored_error);
-      fNewImage = 0;
-    }
+    boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
+      boost::asio::transfer_all(), ignored_error);
     imageMutex.unlock();
     waitForResponse();
   }
@@ -118,7 +114,6 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
           }
           frame++;
       }
-      fNewImage = 1;
       imageMutex.unlock();
     //}
     return 0;
