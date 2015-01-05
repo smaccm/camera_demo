@@ -1,7 +1,7 @@
 #include "smaccminterpreter.hpp"
 
 SmaccmInterpreter::SmaccmInterpreter() : 
-  acceptor(io_service, tcp::endpoint(tcp::v4(), 1337)),
+  acceptor(io_service, tcp::endpoint(tcp::v4(), 4000)),
   socket(io_service) {
 
 }
@@ -21,7 +21,7 @@ void SmaccmInterpreter::sendFrame(){
   boost::system::error_code ignored_error;
   static int i = 0;
   for(;;){
-    usleep(30000);
+    usleep(300000);
     imageMutex.lock();
     if(fNewImage){
       boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
