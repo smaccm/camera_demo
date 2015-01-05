@@ -13,6 +13,7 @@ int SmaccmInterpreter::connect(){
   printf("Client connected!\n");
   socket.set_option(tcp::no_delay(false));
   //start the thread that will be used to send frames
+  fNewFrame = 1;
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
@@ -22,10 +23,16 @@ void SmaccmInterpreter::sendFrame(){
   for(;;){
     //usleep(30000);
     imageMutex.lock();
-    boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
-      boost::asio::transfer_all(), ignored_error);
-    imageMutex.unlock();
-    waitForResponse();
+    if(fNewFrame){
+      boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
+        boost::asio::transfer_all(), ignored_error);
+      fNewFrame = 0;
+      imageMutex.unlock();
+      waitForResponse();
+    }else{
+      usleep(30000);
+    }
+
   }
 }
 
@@ -114,6 +121,7 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
           }
           frame++;
       }
+      fNewFrame = 1; //announce new frame
       imageMutex.unlock();
     //}
     return 0;

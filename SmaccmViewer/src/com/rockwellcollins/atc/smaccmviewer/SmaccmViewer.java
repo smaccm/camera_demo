@@ -32,7 +32,7 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 	private PrintWriter out;
 	private final JFrame frame = new JFrame("SmaccmCopter Video");
 	
-	private Timer timer = new Timer(25, this);
+	private Timer timer = new Timer(50, this);
 	
 	public static void main(String[] args) {
 		
