@@ -84,7 +84,7 @@ int main(int argc, char * argv[])
   int t = 0;
   for(;;){
 
-    usleep(1000000);
+    usleep(100000000);
   }
      
 }  
