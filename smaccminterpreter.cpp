@@ -21,7 +21,7 @@ void SmaccmInterpreter::sendFrame(){
   boost::system::error_code ignored_error;
   static int i = 0;
   for(;;){
-    usleep(300000);
+    usleep(30000);
     imageMutex.lock();
     if(fNewImage){
       boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),

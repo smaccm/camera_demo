@@ -84,7 +84,7 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 				image.setData(raster);
 				i = image;
 				//on the server side we keep going if anything is received
-				out.println("a"); 
+				out.print('a');
 
 			}catch(IOException e)
 			{
