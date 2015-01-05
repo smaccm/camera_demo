@@ -36,10 +36,25 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 	
 	public static void main(String[] args) {
 		
-		SmaccmViewer viewer = new SmaccmViewer();
+		final SmaccmViewer viewer = new SmaccmViewer();
 		viewer.init();
 		Thread thread = new Thread(viewer);
 		thread.start();
+//		Thread heartBeat = new Thread(){
+//			@Override
+//			public void run(){
+//				for(;;){
+//				  viewer.out.print('a');
+//				  try {
+//					Thread.sleep(100);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//				}
+//			};
+//		};
+//		heartBeat.start();
 
 	}
 
@@ -65,9 +80,13 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 	public void run() {
 		int[] pixels = new int[width*height*3];
 		byte[] networkBytes = new byte[width*height*3];
-		
-		//on the server side we keep going if anything is received
-		out.println("a"); 
+
+		//these are acks that are received by the sender to let
+		//her know that we are still listening. after it receives
+		//a single byte of anything it proceeds to send the next frame
+		out.print('a');
+		//out.print('a');
+		out.flush();
 
 		while(true){
 
@@ -84,12 +103,15 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 				image.setData(raster);
 				i = image;
 				//on the server side we keep going if anything is received
-				out.print('a');
 
 			}catch(IOException e)
 			{
 				e.printStackTrace();
 			}
+			//ack
+			out.print('a');
+			out.flush();
+
 		}
 	}
 

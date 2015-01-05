@@ -47,6 +47,7 @@ void SmaccmInterpreter::waitForResponse(){
     socket.set_option(tcp::no_delay(false));  
   }else if (error){
     printf("An error occurred. Waiting for client to reconnect...\n");
+    socket.close();
     acceptor.accept(socket);
     printf("Client reconnected!\n");
     socket.set_option(tcp::no_delay(false));
