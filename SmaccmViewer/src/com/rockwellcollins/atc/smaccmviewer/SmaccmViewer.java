@@ -32,7 +32,7 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 	private PrintWriter out;
 	private final JFrame frame = new JFrame("SmaccmCopter Video");
 	
-	private Timer timer = new Timer(50, this);
+	private Timer timer = new Timer(25, this);
 	
 	public static void main(String[] args) {
 		
@@ -40,21 +40,6 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 		viewer.init();
 		Thread thread = new Thread(viewer);
 		thread.start();
-//		Thread heartBeat = new Thread(){
-//			@Override
-//			public void run(){
-//				for(;;){
-//				  viewer.out.print('a');
-//				  try {
-//					Thread.sleep(100);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//				}
-//			};
-//		};
-//		heartBeat.start();
 
 	}
 
@@ -81,13 +66,6 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 		int[] pixels = new int[width*height*3];
 		byte[] networkBytes = new byte[width*height*3];
 
-		//these are acks that are received by the sender to let
-		//her know that we are still listening. after it receives
-		//a single byte of anything it proceeds to send the next frame
-		out.print('a');
-		//out.print('a');
-		out.flush();
-
 		while(true){
 
 			try
@@ -108,7 +86,10 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 			{
 				e.printStackTrace();
 			}
-			//ack
+			
+			//these are acks that are received by the sender to let
+			//her know that we are still listening. after it receives
+			//a single byte of anything it proceeds to send the next frame
 			out.print('a');
 			out.flush();
 

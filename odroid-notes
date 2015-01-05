@@ -1,0 +1,21 @@
+buadrate: 115200
+username: root
+password: odroid
+
+in /etc/network/interfaces:
+
+# interfaces(5) file used by ifup(8) and ifdown(8)
+auto lo
+iface lo inet loopback
+
+iface wlan1 inet dhcp
+  wireless-essid thurb007
+  wireless-key 0c2f72b289c10780a86282cda57d79f67314a8233c294df2df4b43ed4cb5dc68
+  wpa-driver wext
+  wpa-essid thurb007
+  wpa_psk 0c2f72b289c10780a86282cda57d79f67314a8233c294df2df4b43ed4cb5dc68
+
+
+to get the psk run "wpa_passphrase [ssid] [passphrase]"
+
+use port 4000
