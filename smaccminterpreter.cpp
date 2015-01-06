@@ -22,8 +22,8 @@ void SmaccmInterpreter::sendFrame(){
   static int i = 0;
   for(;;){
     //usleep(30000);
-    imageMutex.lock();
     if(fNewFrame){
+      imageMutex.lock();
       boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
         boost::asio::transfer_all(), ignored_error);
       fNewFrame = 0;
