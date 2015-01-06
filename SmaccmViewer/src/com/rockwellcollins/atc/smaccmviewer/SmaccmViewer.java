@@ -20,8 +20,8 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 
 	private static final long serialVersionUID = 8302649087754364851L;
 	
-	private final String serverName = "192.168.1.123";
-//	private final String serverName = "localhost";
+//	private final String serverName = "192.168.1.123";
+	private final String serverName = "localhost";
 	private final int port = 4000;
 	
 	private Image i = null;

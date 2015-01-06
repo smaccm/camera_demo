@@ -29,14 +29,14 @@ void SmaccmInterpreter::sendFrame(){
       fNewFrame = 0;
       fFrameSent = 1;
     }else{
-      usleep(30000);
       fFrameSent = 0;
     }
     imageMutex.unlock();
     if(fFrameSent){
       waitForResponse();
+    }else{
+      usleep(30000);
     }
-
   }
 }
 
