@@ -19,3 +19,13 @@ iface wlan1 inet dhcp
 to get the psk run "wpa_passphrase [ssid] [passphrase]"
 
 use port 4000
+
+shell script: /etc/init.d/smaccm_camera.sh
+
+#!/bin/sh
+
+#ifup wlan1;
+#/root/camera_demo/demo &
+
+
+set using update-rc.d

@@ -20,8 +20,9 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 
 	private static final long serialVersionUID = 8302649087754364851L;
 	
-	private final String serverName = "192.168.1.123";
+//	private String serverName = "192.168.1.123";
 //	private final String serverName = "localhost";
+	private static String serverName;
 	private final int port = 4000;
 	
 	private Image i = null;
@@ -35,6 +36,13 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 	private Timer timer = new Timer(50, this);
 	
 	public static void main(String[] args) {
+		
+		if(args.length != 1){
+			System.out.println("Usage: java SmaccmViewer.jar [hostname|ip address]");
+			System.exit(0);
+		}
+		
+		serverName = args[0];
 		
 		final SmaccmViewer viewer = new SmaccmViewer();
 		viewer.init();
