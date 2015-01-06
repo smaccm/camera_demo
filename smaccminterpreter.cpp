@@ -21,22 +21,10 @@ void SmaccmInterpreter::sendFrame(){
   boost::system::error_code ignored_error;
   int fFrameSent = 0;
   for(;;){
-    //usleep(30000);
-    imageMutex.lock();
-    if(fNewFrame){
+      usleep(30000);
       boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
         boost::asio::transfer_all(), ignored_error);
-      fNewFrame = 0;
-      fFrameSent = 1;
-    }else{
-      fFrameSent = 0;
-    }
-    imageMutex.unlock();
-    if(fFrameSent){
       waitForResponse();
-    }else{
-      usleep(30000);
-    }
   }
 }
 
@@ -104,7 +92,6 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
     uint32_t r, g, b;
     
     //if(imageMutex.try_lock()){
-      imageMutex.lock();
       // skip first line
       frame += width;
 
@@ -125,8 +112,6 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
           }
           frame++;
       }
-      fNewFrame = 1; //announce new frame
-      imageMutex.unlock();
     //}
     return 0;
 }
