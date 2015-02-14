@@ -60,6 +60,7 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 			out = new PrintWriter(client.getOutputStream(), true);
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.exit(ABORT);
 		} 
 		
 		frame.setSize(width, height);
