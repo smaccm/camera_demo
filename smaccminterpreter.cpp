@@ -183,7 +183,7 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
         break;
 
       case CRP_HSTRING:
-
+        printf("I see something!\n");
         break;
       
       default:
