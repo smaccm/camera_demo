@@ -13,9 +13,10 @@ all: demo
 server: server.c
 	$(CC) server.c $(LIBS) -o server
 
-demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o timer.o
+demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o timer.o blob.o blobs.o colorlut.o processblobs.o qqueue.o
 	$(CC) chirp.o chirpreceiver.o demo.o timer.o \
-          pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o $(LIBS) -o demo
+          pixy.o pixyinterpreter.o smaccminterpreter.o \
+          usblink.o blob.o blobs.o colorlut.o processblobs.o qqueue.o $(LIBS) -o demo
 
 smaccminterpreter.o: smaccminterpreter.cpp
 	$(CC) $(CFLAGS) smaccminterpreter.cpp
@@ -40,6 +41,21 @@ usblink.o: usblink.cpp
 
 timer.o: utils/timer.cpp
 	$(CC) $(CFLAGS) utils/timer.cpp
+
+blob.o: blobstuff/blob.cpp
+	$(CC) $(CFLAGS) blobstuff/blob.cpp
+
+blobs.o: blobstuff/blobs.cpp
+	$(CC) $(CFLAGS) blobstuff/blobs.cpp
+
+colorlut.o: blobstuff/colorlut.cpp
+	$(CC) $(CFLAGS) blobstuff/colorlut.cpp
+
+processblobs.o: blobstuff/processblobs.cpp
+	$(CC) $(CFLAGS) blobstuff/processblobs.cpp
+
+qqueue.o: blobstuff/qqueue.cpp
+	$(CC) $(CFLAGS) blobstuff/qqueue.cpp
 
 clean:
 	rm -f *.o; \

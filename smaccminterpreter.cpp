@@ -166,14 +166,34 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
             renderBA81(width, height, pFrame, processedPixels);
             break;
           case FOURCC('C', 'C', 'Q', '1'):
+            printf("got CCQ1\n");
             break;
           case FOURCC('C', 'C', 'B', '1'):
+            printf("got CCB1\n");
             //interpret_CCB1(chirp_data + 1);
             break;
           case FOURCC('C', 'C', 'B', '2'):
+            printf("got CCB2\n");
             //interpret_CCB2(chirp_data + 1);
             break;
           case FOURCC('C', 'M', 'V', '1'):
+            uint32_t cmodelsLen;
+            float * cmodels;
+            cmodelsLen = *(uint32_t *)chirp_data[1];
+            cmodels = (float *)chirp_data[2];
+            width = *(uint16_t *)chirp_data[4];
+            height = *(uint16_t *)chirp_data[5];
+            frame_len = *(uint32_t *)chirp_data[6];
+            pFrame = (uint8_t *)chirp_data[7];
+            printf("numModels : %d\n",cmodelsLen);
+			assert(width == sentWidth);
+			assert(height == sentHeight);
+			assert(frame_len = width*height);
+
+            //printf("rendering: %d\n", t++);
+			
+            renderBA81(sentWidth, sentHeight, pFrame, processedPixels);
+
             break;
           default:
             printf("libpixy: Chirp hint [%u] not recognized.\n", chirp_type);
