@@ -75,7 +75,11 @@ int main(int argc, char * argv[])
   
   //this is magic. I have no idea why I need to do this but I do
   printf("running prog\n");
+  //pixy_command("runprog", 0x01, 8, END, &response, END);
+  //for some reason we need to run the first command first and then this one
+  //otherwise the pixy does not see any frames???
   pixy_command("runprogArg", 0x01, 8, 0x01, 1, END, &response, END);
+  pixy_command("cam_setAWB", 0x01, 1, 0, &response, 0);
   //pixy_command("runprog", 0x01, 8, END, &response, END);
   printf("sent running prog\n");
   //pixy_command("cam_setAWB", 0x01, 1, 0, &response, 0);

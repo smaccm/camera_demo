@@ -2,7 +2,8 @@
 
 SmaccmInterpreter::SmaccmInterpreter() : 
   acceptor(io_service, tcp::endpoint(tcp::v4(), 4000)),
-  socket(io_service) {
+  socket(io_service),
+  m_blobs() {
 
 }
 
@@ -95,6 +96,76 @@ void SmaccmInterpreter::interpolateBayer(unsigned int width, unsigned int x, uns
     }
 }
 
+int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint8_t * lines, uint32_t numBlobs, BlobA * blobs)
+{
+    uint16_t x, y;
+    uint8_t *line;
+    uint32_t r, g, b;
+    
+    //if(imageMutex.try_lock()){
+      imageMutex.lock();
+      // skip first line
+      frame += width;
+
+      // don't render top and bottom rows, and left and rightmost columns because of color
+      // interpolation
+
+      for (y=1; y<height-1; y++)
+      {
+          line = (uint8_t *)(lines + (y-1)*width*3);
+          frame++;
+          for (x=1; x<width-1; x++, frame++)
+          {
+              interpolateBayer(width, x, y, frame, r, g, b);
+              //*line++ = (0x40<<24) | (r<<16) | (g<<8) | (b<<0);
+              *line++ = (uint8_t)r;
+              *line++ = (uint8_t)g;
+              *line++ = (uint8_t)b;
+          }
+          frame++;
+      }
+
+      int blobIndex;
+      for(blobIndex = 0; blobIndex < numBlobs; blobIndex++){
+        int l, r, t, b;
+        l = blobs[blobIndex].m_left*2;
+        r = blobs[blobIndex].m_right*2;
+        t = blobs[blobIndex].m_top*2;
+        b = blobs[blobIndex].m_bottom*2;
+	    printf("Blob%d (l,r,t,b): (%d,%d,%d,%d)\n", blobIndex, l, r, t, b); 
+        assert(l <= 320);
+        assert(r <= 320);
+        assert(t <= 200);
+        assert(b <= 200);
+        assert(l <= r);
+        assert(t <= b);
+
+        int i;
+        for(i = l*3; i <= 3*r; i = i + 3){
+          lines[(width*3*t) + i] = 0;  
+          lines[(width*3*t) + i+1] = 255;  
+          lines[(width*3*t) + i+2] = 0;  
+          lines[(width*3*b) + i] = 0;  
+          lines[(width*3*b) + i+1] = 255;  
+          lines[(width*3*b) + i+2] = 0;  
+        }
+
+        for(i = t*width*3; i <= b*width*3; i = i + width*3){
+          lines[i + l*3] = 0;  
+          lines[i + l*3+1] = 255;  
+          lines[i + l*3+2] = 0;  
+          lines[i + r*3] = 0;  
+          lines[i + r*3+1] = 255;  
+          lines[i + r*3+2] = 0;  
+        }
+	  }
+
+
+      fNewFrame = 1; //announce new frame
+      imageMutex.unlock();
+    //}
+    return 0;
+}
 
 //with is in pixels not bytes!
 int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint8_t * lines)
@@ -130,6 +201,33 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
     //}
     return 0;
 }
+
+int SmaccmInterpreter::renderCMV1(uint8_t renderFlags, uint32_t cmodelsLen, float *cmodels, uint16_t width, uint16_t height, uint32_t frameLen, uint8_t *frame) 
+{
+    int i;
+    uint32_t numBlobs, numCCBlobs;
+    BlobA *blobs;
+    BlobB *ccBlobs;
+    uint32_t numQvals;
+    uint32_t *qVals;
+
+    if (cmodelsLen>=sizeof(ColorModel)*NUM_MODELS/sizeof(float)) // create lookup table
+    {   
+        m_blobs.m_blobs->m_clut->clear();
+        for (i=0; i<NUM_MODELS; i++, cmodels+=sizeof(ColorModel)/sizeof(float))
+            m_blobs.m_blobs->m_clut->add((ColorModel *)cmodels, i+1);
+    }   
+
+    m_blobs.process(Frame8(frame, width, height), &numBlobs, &blobs, &numCCBlobs, &ccBlobs, &numQvals, &qVals);
+
+    renderBA81(width, height, frame, processedPixels, numBlobs, blobs);
+    printf("num blobs: %d\n", numBlobs);
+ //   renderCCQ1(0, width/2, height/2, numQvals, qVals);
+ //   renderCCB2(RENDER_FLAG_FLUSH, width/2, height/2, numBlobs*sizeof(BlobA)/sizeof(uint16_t), (uint16_t *)blobs, numCCBlobs*sizeof(BlobB)/sizeof(uint16_t), (uint16_t *)ccBlobs);
+
+    return 0;
+}
+
 
 void SmaccmInterpreter::interpret_data(void * chirp_data[])
 {
@@ -179,20 +277,19 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
           case FOURCC('C', 'M', 'V', '1'):
             uint32_t cmodelsLen;
             float * cmodels;
-            cmodelsLen = *(uint32_t *)chirp_data[1];
-            cmodels = (float *)chirp_data[2];
+            cmodelsLen = *(uint32_t *)chirp_data[2];
+            cmodels = (float *)chirp_data[3];
             width = *(uint16_t *)chirp_data[4];
             height = *(uint16_t *)chirp_data[5];
             frame_len = *(uint32_t *)chirp_data[6];
             pFrame = (uint8_t *)chirp_data[7];
-            printf("numModels : %d\n",cmodelsLen);
 			assert(width == sentWidth);
 			assert(height == sentHeight);
 			assert(frame_len = width*height);
 
-            //printf("rendering: %d\n", t++);
+            printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
 			
-            renderBA81(sentWidth, sentHeight, pFrame, processedPixels);
+            renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
 
             break;
           default:
