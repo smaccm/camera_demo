@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ifconfig wlan1 down
-#iwconfig  wlan1 channel 4
+iwconfig  wlan1 channel 4
 iwconfig  wlan1 mode ad-hoc
 iwconfig  wlan1 essid 'odroid'
-iwconfig  wlan1 key 1234567890
+#iwconfig  wlan1 key 1234567890
 ifconfig  wlan1 192.168.1.2
