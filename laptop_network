@@ -4,7 +4,7 @@ ifconfig wlan0 down
 #iwconfig  wlan0 channel 4
 iwconfig  wlan0 mode ad-hoc
 iwconfig  wlan0 essid 'odroid'
-#iwconfig  wlan0 key 1234567890
+iwconfig  wlan0 key 1234567890
 ifconfig  wlan0 192.168.1.1
 
 
