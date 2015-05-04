@@ -25,6 +25,7 @@ void SmaccmInterpreter::sendFrame(){
     //usleep(30000);
     imageMutex.lock();
     if(fNewFrame){
+      renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
       boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
         boost::asio::transfer_all(), ignored_error);
       fNewFrame = 0;
@@ -103,7 +104,7 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
     uint32_t r, g, b;
     
     //if(imageMutex.try_lock()){
-      imageMutex.lock();
+      //imageMutex.lock();
       // skip first line
       frame += width;
 
@@ -161,8 +162,8 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
 	  }
 
 
-      fNewFrame = 1; //announce new frame
-      imageMutex.unlock();
+      //fNewFrame = 1; //announce new frame
+      //imageMutex.unlock();
     //}
     return 0;
 }
@@ -222,8 +223,6 @@ int SmaccmInterpreter::renderCMV1(uint8_t renderFlags, uint32_t cmodelsLen, floa
 
     renderBA81(width, height, frame, processedPixels, numBlobs, blobs);
     printf("num blobs: %d\n", numBlobs);
- //   renderCCQ1(0, width/2, height/2, numQvals, qVals);
- //   renderCCB2(RENDER_FLAG_FLUSH, width/2, height/2, numBlobs*sizeof(BlobA)/sizeof(uint16_t), (uint16_t *)blobs, numCCBlobs*sizeof(BlobB)/sizeof(uint16_t), (uint16_t *)ccBlobs);
 
     return 0;
 }
@@ -248,9 +247,6 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
         switch(chirp_type) {
 
           case FOURCC('B', 'A', '8', '1'):
-            uint16_t width, height;
-            uint32_t frame_len;
-            uint8_t * pFrame;
 			width = *(uint16_t *)chirp_data[2];
 			height = *(uint16_t *)chirp_data[3];
 			frame_len = *(uint32_t *)chirp_data[4];
@@ -275,22 +271,22 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
             //interpret_CCB2(chirp_data + 1);
             break;
           case FOURCC('C', 'M', 'V', '1'):
-            uint32_t cmodelsLen;
-            float * cmodels;
-            cmodelsLen = *(uint32_t *)chirp_data[2];
-            cmodels = (float *)chirp_data[3];
-            width = *(uint16_t *)chirp_data[4];
-            height = *(uint16_t *)chirp_data[5];
-            frame_len = *(uint32_t *)chirp_data[6];
-            pFrame = (uint8_t *)chirp_data[7];
-			assert(width == sentWidth);
-			assert(height == sentHeight);
-			assert(frame_len = width*height);
+            
+            if(imageMutex.try_lock()){
+              cmodelsLen = *(uint32_t *)chirp_data[2];
+              cmodels = (float *)chirp_data[3];
+              width = *(uint16_t *)chirp_data[4];
+              height = *(uint16_t *)chirp_data[5];
+              frame_len = *(uint32_t *)chirp_data[6];
+              pFrame = (uint8_t *)chirp_data[7];
+			  assert(width == sentWidth);
+			  assert(height == sentHeight);
+			  assert(frame_len = width*height);
 
-            printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
-			
-            renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
-
+              fNewFrame = 1;
+              printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
+              imageMutex.unlock();
+            }
             break;
           default:
             printf("libpixy: Chirp hint [%u] not recognized.\n", chirp_type);

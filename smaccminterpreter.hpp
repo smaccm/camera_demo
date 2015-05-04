@@ -37,7 +37,14 @@ class SmaccmInterpreter : public PixyInterpreter
     //mutex for sending images
     boost::mutex imageMutex;  
 
+    //global vars for receiving new frame
     int fNewFrame;
+
+    uint16_t width, height;
+    uint32_t frame_len;
+    uint8_t * pFrame;
+    uint32_t cmodelsLen;
+    float * cmodels;
 
     void interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b);
 
