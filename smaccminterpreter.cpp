@@ -26,14 +26,16 @@ void SmaccmInterpreter::sendFrame(){
     imageMutex.lock();
     if(fNewFrame){
       renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
+//    imageMutex.lock();
+//    if(fNewFrame){
       boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
         boost::asio::transfer_all(), ignored_error);
       fNewFrame = 0;
       fFrameSent = 1;
-    }else{
-      fFrameSent = 0;
+//    }else{
+//      fFrameSent = 0;
     }
-    imageMutex.unlock();
+//    imageMutex.unlock();
     if(fFrameSent){
       waitForResponse();
     }else{
