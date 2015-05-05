@@ -1,6 +1,9 @@
 #include "pixyinterpreter.hpp"
 #include <boost/asio.hpp>
 #include  <boost/thread/thread.hpp>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,6 +15,7 @@
 #ifndef __SMACCMINTERPRETER_HPP__
 #define __SMACCMINTERPRETER_HPP__
 
+#define SERVICE_PORT 4000
 using boost::asio::ip::tcp;
 
 class SmaccmInterpreter : public PixyInterpreter
@@ -19,17 +23,22 @@ class SmaccmInterpreter : public PixyInterpreter
   public:
     SmaccmInterpreter();
     int connect();
+    int connect(int port);
   private:
     //socket stuff
-    boost::asio::io_service io_service;
-    tcp::acceptor acceptor;
-    tcp::socket socket;
+    //boost::asio::io_service io_service;
+    //tcp::acceptor acceptor;
+    //tcp::socket socket;
+    struct sockaddr_in myaddr; //our address
+    struct sockaddr_in remaddr; //remote address
+    int recvfd; //receive file descriptor
+    int sendfd; //send file descritptor
 
     //image stuff
     static const int sentWidth = 320;
     static const int sentHeight = 200;
     //r,g,b, each take a byte
-    uint8_t processedPixels[sentWidth*sentHeight*3];
+    uint8_t processedPixels[sentWidth*sentHeight*3+1];//extra byte is a hack to keep track of udp message number
  
     //used for calculating blobs
     ProcessBlobs m_blobs;

@@ -59,7 +59,12 @@ int main(int argc, char * argv[])
   
 
   //wait for client connection
-  interpreter.connect();
+  if(argc == 2){
+    interpreter.connect(atoi(argv[1]));
+  }else{
+    interpreter.connect();
+  }
+
   // Connect to Pixy //
   pixy_init_status = pixy_init();
 
