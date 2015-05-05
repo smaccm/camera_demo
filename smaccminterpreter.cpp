@@ -1,19 +1,54 @@
 #include "smaccminterpreter.hpp"
 
 SmaccmInterpreter::SmaccmInterpreter() : 
-  acceptor(io_service, tcp::endpoint(tcp::v4(), 4000)),
-  socket(io_service),
   m_blobs() {
-
 }
 
 int SmaccmInterpreter::connect(){
-  //set the flag saying we have not captured an image yet
+  connect(SERVICE_PORT);
+}
+
+int SmaccmInterpreter::connect(int port){
+
+	if ((recvfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("cannot create socket\n");
+		exit(0);
+	}
+
+
+	/* bind the socket to any valid IP address and a specific port */
+
+	memset((char *)&myaddr, 0, sizeof(myaddr));
+	myaddr.sin_family = AF_INET;
+	myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	myaddr.sin_port = htons(port);
+
+	if (bind(recvfd, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) {
+		perror("bind failed");
+		return 0;
+	}
+
+	if ((sendfd=socket(AF_INET, SOCK_DGRAM, 0))==-1)
+      printf("response socket created\n");
+
+
+    int trysize, gotsize, err;
+    socklen_t len = sizeof(int);
+    trysize = 1048576+32768;
+    do {
+       trysize -= 32768;
+       setsockopt(sendfd,SOL_SOCKET,SO_SNDBUF,(char*)&trysize,len);
+       err = getsockopt(sendfd,SOL_SOCKET,SO_SNDBUF,(char*)&gotsize,&len);
+       if (err < 0) { perror("getsockopt"); break; }
+    } while (gotsize < trysize);
+    printf("Size of output socket set to %d\n",gotsize);
+
+
   printf("waiting for client connection...\n");
-  acceptor.accept(socket);
-  printf("Client connected!\n");
-  socket.set_option(tcp::no_delay(false));
-  //start the thread that will be used to send frames
+  char val;
+  socklen_t addrlen = sizeof(remaddr);
+  int recvlen = recvfrom(recvfd, &val, 1, 0, (struct sockaddr *)&remaddr, &addrlen);
+  printf("Client connected at address: %d! address length is: %d\n", remaddr.sin_addr.s_addr, addrlen);
   fNewFrame = 1;
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
@@ -23,46 +58,56 @@ void SmaccmInterpreter::sendFrame(){
   int fFrameSent = 0;
   for(;;){
     //usleep(30000);
-    imageMutex.lock();
     if(fNewFrame){
+      imageMutex.lock();
       renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
-//    imageMutex.lock();
-//    if(fNewFrame){
-      boost::asio::write(socket, boost::asio::buffer(processedPixels, sentWidth*sentHeight*sizeof(uint8_t)*3),
-        boost::asio::transfer_all(), ignored_error);
+      int curpacket;
+      int curindex;
+      int numpackets = sentHeight;
+      int messagesize = (sentWidth*3 + 1)*sizeof(uint8_t);
+      
+      printf("----------------------------------\n");
+      for(curpacket = 0, curindex = 0;  curpacket < sentHeight; curpacket++, curindex += messagesize-sizeof(uint8_t)){
+        processedPixels[curindex] = curpacket; //hack to keep track of message ids 
+        //printf("sending to address: %d\n", remaddr.sin_addr.s_addr);
+	    if (sendto(recvfd, processedPixels+curindex, messagesize, 0, 
+            (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in))){
+	     //perror("sendto");
+        }
+      }
+      printf("++++++++++++++++++++++++++++++++++\n");
       fNewFrame = 0;
       fFrameSent = 1;
-//    }else{
-//      fFrameSent = 0;
+      imageMutex.unlock();
     }
-//    imageMutex.unlock();
-    if(fFrameSent){
-      waitForResponse();
-    }else{
-      usleep(30000);
-    }
+ //   usleep(30000);
+    //if(fFrameSent){
+    //  waitForResponse();
+    //}else{
+    //  usleep(30000);
+    //}
   }
 }
 
 void SmaccmInterpreter::waitForResponse(){
-  boost::array<char, 1> buf;
-  boost::system::error_code error;
-  size_t len = 0;
+//  boost::array<char, 1> buf;
+//  boost::system::error_code error;
+//  size_t len = 0;
 
-  len = socket.read_some(boost::asio::buffer(buf), error);
-  if (error == boost::asio::error::eof){
-    printf("Client disconnected. Waiting for reconnect...\n");
-    socket.close();
-    acceptor.accept(socket);
-    printf("Client reconnected!\n");
-    socket.set_option(tcp::no_delay(false));  
-  }else if (error){
-    printf("An error occurred. Waiting for client to reconnect...\n");
-    socket.close();
-    acceptor.accept(socket);
-    printf("Client reconnected!\n");
-    socket.set_option(tcp::no_delay(false));
-  }
+//  len = socket.read_some(boost::asio::buffer(buf), error);
+//  if (error == boost::asio::error::eof){
+//    printf("Client disconnected. Waiting for reconnect...\n");
+//    socket.close();
+//    acceptor.accept(socket);
+//    printf("Client reconnected!\n");
+//    socket.set_option(tcp::no_delay(false));  
+//  }else if (error){
+//    printf("An error occurred. Waiting for client to reconnect...\n");
+//    socket.close();
+//    acceptor.accept(socket);
+//    printf("Client reconnected!\n");
+//    socket.set_option(tcp::no_delay(false));
+//  }
 }
 
 void SmaccmInterpreter::interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b)
@@ -171,39 +216,39 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
 }
 
 //with is in pixels not bytes!
-int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint8_t * lines)
-{
-    uint16_t x, y;
-    uint8_t *line;
-    uint32_t r, g, b;
-    
-    //if(imageMutex.try_lock()){
-      imageMutex.lock();
-      // skip first line
-      frame += width;
-
-      // don't render top and bottom rows, and left and rightmost columns because of color
-      // interpolation
-
-      for (y=1; y<height-1; y++)
-      {
-          line = (uint8_t *)(lines + (y-1)*width*3);
-          frame++;
-          for (x=1; x<width-1; x++, frame++)
-          {
-              interpolateBayer(width, x, y, frame, r, g, b);
-              //*line++ = (0x40<<24) | (r<<16) | (g<<8) | (b<<0);
-              *line++ = (uint8_t)r;
-              *line++ = (uint8_t)g;
-              *line++ = (uint8_t)b;
-          }
-          frame++;
-      }
-      fNewFrame = 1; //announce new frame
-      imageMutex.unlock();
-    //}
-    return 0;
-}
+//int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint8_t * lines)
+//{
+//    uint16_t x, y;
+//    uint8_t *line;
+//    uint32_t r, g, b;
+//    
+//    //if(imageMutex.try_lock()){
+//      imageMutex.lock();
+//      // skip first line
+//      frame += width;
+//
+//      // don't render top and bottom rows, and left and rightmost columns because of color
+//      // interpolation
+//
+//      for (y=1; y<height-1; y++)
+//      {
+//          line = (uint8_t *)(lines + (y-1)*width*3);
+//          frame++;
+//          for (x=1; x<width-1; x++, frame++)
+//          {
+//              interpolateBayer(width, x, y, frame, r, g, b);
+//              //*line++ = (0x40<<24) | (r<<16) | (g<<8) | (b<<0);
+//              *line++ = (uint8_t)r;
+//              *line++ = (uint8_t)g;
+//              *line++ = (uint8_t)b;
+//          }
+//          frame++;
+//      }
+//      fNewFrame = 1; //announce new frame
+//      imageMutex.unlock();
+//    //}
+//    return 0;
+//}
 
 int SmaccmInterpreter::renderCMV1(uint8_t renderFlags, uint32_t cmodelsLen, float *cmodels, uint16_t width, uint16_t height, uint32_t frameLen, uint8_t *frame) 
 {
@@ -223,7 +268,7 @@ int SmaccmInterpreter::renderCMV1(uint8_t renderFlags, uint32_t cmodelsLen, floa
 
     m_blobs.process(Frame8(frame, width, height), &numBlobs, &blobs, &numCCBlobs, &ccBlobs, &numQvals, &qVals);
 
-    renderBA81(width, height, frame, processedPixels, numBlobs, blobs);
+    renderBA81(width, height, frame, processedPixels+1, numBlobs, blobs);
     printf("num blobs: %d\n", numBlobs);
 
     return 0;
@@ -249,17 +294,6 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
         switch(chirp_type) {
 
           case FOURCC('B', 'A', '8', '1'):
-			width = *(uint16_t *)chirp_data[2];
-			height = *(uint16_t *)chirp_data[3];
-			frame_len = *(uint32_t *)chirp_data[4];
-			pFrame = (uint8_t *)chirp_data[5];
-			assert(width == sentWidth);
-			assert(height == sentHeight);
-			assert(frame_len = width*height);
-
-            //printf("rendering: %d\n", t++);
-			
-            renderBA81(width, height, pFrame, processedPixels);
             break;
           case FOURCC('C', 'C', 'Q', '1'):
             printf("got CCQ1\n");
@@ -288,6 +322,8 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
               fNewFrame = 1;
               printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
               imageMutex.unlock();
+            }else{
+ 	          printf("didn't get lock\n");
             }
             break;
           default:
