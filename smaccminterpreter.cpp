@@ -9,10 +9,12 @@ int SmaccmInterpreter::connect(){
 }
 
 int SmaccmInterpreter::connect(int port){
+
 	if ((recvfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("cannot create socket\n");
 		exit(0);
 	}
+
 
 	/* bind the socket to any valid IP address and a specific port */
 
@@ -30,10 +32,16 @@ int SmaccmInterpreter::connect(int port){
       printf("response socket created\n");
 
 
- //   memset((char *)&myaddr, 0, sizeof(myaddr));
-//	myaddr.sin_family = AF_INET;
-//	myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-//	myaddr.sin_port = htons(0);
+    int trysize, gotsize, err;
+    socklen_t len = sizeof(int);
+    trysize = 1048576+32768;
+    do {
+       trysize -= 32768;
+       setsockopt(sendfd,SOL_SOCKET,SO_SNDBUF,(char*)&trysize,len);
+       err = getsockopt(sendfd,SOL_SOCKET,SO_SNDBUF,(char*)&gotsize,&len);
+       if (err < 0) { perror("getsockopt"); break; }
+    } while (gotsize < trysize);
+    printf("Size of output socket set to %d\n",gotsize);
 
 
   printf("waiting for client connection...\n");
@@ -41,11 +49,6 @@ int SmaccmInterpreter::connect(int port){
   socklen_t addrlen = sizeof(remaddr);
   int recvlen = recvfrom(recvfd, &val, 1, 0, (struct sockaddr *)&remaddr, &addrlen);
   printf("Client connected at address: %d! address length is: %d\n", remaddr.sin_addr.s_addr, addrlen);
-//	    if (bind(sendfd, (struct sockaddr *)&remaddr, sizeof(remaddr)) < 0) {
-//		    perror("response bind failed");
-//		    return 0;
-//	    }        
-  //start the thread that will be used to send frames
   fNewFrame = 1;
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
@@ -64,6 +67,7 @@ void SmaccmInterpreter::sendFrame(){
       int numpackets = sentHeight;
       int messagesize = (sentWidth*3 + 1)*sizeof(uint8_t);
       
+      printf("----------------------------------\n");
       for(curpacket = 0, curindex = 0;  curpacket < sentHeight; curpacket++, curindex += messagesize-sizeof(uint8_t)){
         processedPixels[curindex] = curpacket; //hack to keep track of message ids 
         //printf("sending to address: %d\n", remaddr.sin_addr.s_addr);
@@ -72,6 +76,7 @@ void SmaccmInterpreter::sendFrame(){
 	     //perror("sendto");
         }
       }
+      printf("++++++++++++++++++++++++++++++++++\n");
       fNewFrame = 0;
       fFrameSent = 1;
     }
@@ -329,6 +334,7 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
               fNewFrame = 1;
               printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
               imageMutex.unlock();
+              usleep(300000);
             //}
             break;
           default:
