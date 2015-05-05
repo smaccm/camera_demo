@@ -61,7 +61,6 @@ void SmaccmInterpreter::sendFrame(){
     if(fNewFrame){
       imageMutex.lock();
       renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
-      imageMutex.unlock();
       int curpacket;
       int curindex;
       int numpackets = sentHeight;
@@ -79,6 +78,7 @@ void SmaccmInterpreter::sendFrame(){
       printf("++++++++++++++++++++++++++++++++++\n");
       fNewFrame = 0;
       fFrameSent = 1;
+      imageMutex.unlock();
     }
  //   usleep(30000);
     //if(fFrameSent){
@@ -294,17 +294,6 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
         switch(chirp_type) {
 
           case FOURCC('B', 'A', '8', '1'):
-//			width = *(uint16_t *)chirp_data[2];
-//			height = *(uint16_t *)chirp_data[3];
-//			frame_len = *(uint32_t *)chirp_data[4];
-//			pFrame = (uint8_t *)chirp_data[5];
-//			assert(width == sentWidth);
-//			assert(height == sentHeight);
-//			assert(frame_len = width*height);
-//
-//            //printf("rendering: %d\n", t++);
-//			
-//            renderBA81(width, height, pFrame, processedPixels);
             break;
           case FOURCC('C', 'C', 'Q', '1'):
             printf("got CCQ1\n");
@@ -319,8 +308,7 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
             break;
           case FOURCC('C', 'M', 'V', '1'):
             
-            //if(imageMutex.try_lock()){
-              imageMutex.lock();
+            if(imageMutex.try_lock()){
               cmodelsLen = *(uint32_t *)chirp_data[2];
               cmodels = (float *)chirp_data[3];
               width = *(uint16_t *)chirp_data[4];
@@ -334,8 +322,9 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
               fNewFrame = 1;
               printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
               imageMutex.unlock();
-              usleep(300000);
-            //}
+            }else{
+ 	          printf("didn't get lock\n");
+            }
             break;
           default:
             printf("libpixy: Chirp hint [%u] not recognized.\n", chirp_type);
