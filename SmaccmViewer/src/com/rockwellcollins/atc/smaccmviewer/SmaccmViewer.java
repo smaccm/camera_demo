@@ -100,6 +100,12 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 						pixels[width*lineNum*3 + (i-1)] = line[i];
 					}
 				}
+				
+				while(lineNum != 199){
+					//we have shifted due to packet loss, keep reading until we get back to 0
+					client.receive(receivePacket);
+					lineNum = line[0] & 0xFF;
+				}
 
 				//if(capturedWholeFrame){
 					BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
