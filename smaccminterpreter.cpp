@@ -60,14 +60,12 @@ void SmaccmInterpreter::sendFrame(){
     //usleep(30000);
     if(fNewFrame){
       imageMutex.lock();
-      renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
       int curpacket;
       int curindex;
       int numpackets = sentHeight;
       int messagesize = (sentWidth*3 + 1)*sizeof(uint8_t);
       
-      printf("----------------------------------\n");
-      for(curpacket = 0, curindex = 0;  curpacket < sentHeight; curpacket++, curindex += messagesize-sizeof(uint8_t)){
+      for(curpacket = 0, curindex = 0;  curpacket < numpackets; curpacket++, curindex += messagesize-sizeof(uint8_t)){
         processedPixels[curindex] = curpacket; //hack to keep track of message ids 
         //printf("sending to address: %d\n", remaddr.sin_addr.s_addr);
 	    if (sendto(recvfd, processedPixels+curindex, messagesize, 0, 
@@ -75,12 +73,11 @@ void SmaccmInterpreter::sendFrame(){
 	     //perror("sendto");
         }
       }
-      printf("++++++++++++++++++++++++++++++++++\n");
       fNewFrame = 0;
       fFrameSent = 1;
       imageMutex.unlock();
     }
- //   usleep(30000);
+    //usleep(3000000);
     //if(fFrameSent){
     //  waitForResponse();
     //}else{
@@ -269,7 +266,7 @@ int SmaccmInterpreter::renderCMV1(uint8_t renderFlags, uint32_t cmodelsLen, floa
     m_blobs.process(Frame8(frame, width, height), &numBlobs, &blobs, &numCCBlobs, &ccBlobs, &numQvals, &qVals);
 
     renderBA81(width, height, frame, processedPixels+1, numBlobs, blobs);
-    printf("num blobs: %d\n", numBlobs);
+    //printf("num blobs: %d\n", numBlobs);
 
     return 0;
 }
@@ -308,7 +305,8 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
             break;
           case FOURCC('C', 'M', 'V', '1'):
             
-            if(imageMutex.try_lock()){
+              imageMutex.lock();
+            //if(imageMutex.try_lock()){
               cmodelsLen = *(uint32_t *)chirp_data[2];
               cmodels = (float *)chirp_data[3];
               width = *(uint16_t *)chirp_data[4];
@@ -319,12 +317,13 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
 			  assert(height == sentHeight);
 			  assert(frame_len = width*height);
 
+              renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
               fNewFrame = 1;
-              printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
+ //             printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
               imageMutex.unlock();
-            }else{
- 	          printf("didn't get lock\n");
-            }
+            //}else{
+ 	        //  printf("didn't get lock\n");
+            //}
             break;
           default:
             printf("libpixy: Chirp hint [%u] not recognized.\n", chirp_type);

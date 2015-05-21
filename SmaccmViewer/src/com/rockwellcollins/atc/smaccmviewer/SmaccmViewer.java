@@ -15,6 +15,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -83,29 +84,21 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 
 	public void run() {
 		int[] pixels = new int[width*height*3];
-		byte[] networkBytes = new byte[width*height*3];
 		byte[] line = new byte[width*3 + 1];
 		DatagramPacket receivePacket = new DatagramPacket(line, line.length); 
+		
 		while(true){
 			
 			
 			try
 			{
 				int lineNum = -1;
-				boolean capturedWholeFrame = true;
-				while(lineNum != 199){
+				for(int p = 0; p < height; p++){
 					client.receive(receivePacket);
-					int preLineNum = lineNum;
 					lineNum = line[0] & 0xFF;
-					if(preLineNum + 1 != lineNum){
-						capturedWholeFrame = false;
-					}
-					
-					//System.out.println(lineNum);
 					for(int i = 1; i < width*3+1; i++){
 						pixels[width*lineNum*3 + (i-1)] = line[i];
 					}
-					
 				}
 
 				//if(capturedWholeFrame){
