@@ -60,6 +60,7 @@ void SmaccmInterpreter::sendFrame(){
     //usleep(30000);
     if(fNewFrame){
       imageMutex.lock();
+      renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
       int curpacket;
       int curindex;
       int numpackets = sentHeight;
@@ -72,12 +73,15 @@ void SmaccmInterpreter::sendFrame(){
             (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in))){
 	     //perror("sendto");
         }
+       // if(numpackets % 10 == 0){
+       //     usleep(5000);
+       // }
       }
       fNewFrame = 0;
       fFrameSent = 1;
       imageMutex.unlock();
     }
-    //usleep(3000000);
+    usleep(100000);
     //if(fFrameSent){
     //  waitForResponse();
     //}else{
@@ -305,8 +309,7 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
             break;
           case FOURCC('C', 'M', 'V', '1'):
             
-              imageMutex.lock();
-            //if(imageMutex.try_lock()){
+            if(imageMutex.try_lock()){
               cmodelsLen = *(uint32_t *)chirp_data[2];
               cmodels = (float *)chirp_data[3];
               width = *(uint16_t *)chirp_data[4];
@@ -317,13 +320,12 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
 			  assert(height == sentHeight);
 			  assert(frame_len = width*height);
 
-              renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
               fNewFrame = 1;
  //             printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
               imageMutex.unlock();
-            //}else{
+            }else{
  	        //  printf("didn't get lock\n");
-            //}
+            }
             break;
           default:
             printf("libpixy: Chirp hint [%u] not recognized.\n", chirp_type);
