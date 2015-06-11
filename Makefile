@@ -13,10 +13,11 @@ all: demo
 server: server.c
 	$(CC) server.c $(LIBS) -o server
 
-demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o timer.o blob.o blobs.o colorlut.o processblobs.o qqueue.o
+demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o timer.o blob.o blobs.o colorlut.o processblobs.o qqueue.o sel4libvchan.o blob_interface.o
 	$(CC) chirp.o chirpreceiver.o demo.o timer.o \
           pixy.o pixyinterpreter.o smaccminterpreter.o \
-          usblink.o blob.o blobs.o colorlut.o processblobs.o qqueue.o $(LIBS) -o demo
+          usblink.o blob.o blobs.o colorlut.o processblobs.o \
+          qqueue.o sel4libvchan.o blob_interface.o $(LIBS) -o demo
 
 smaccminterpreter.o: smaccminterpreter.cpp
 	$(CC) $(CFLAGS) smaccminterpreter.cpp
@@ -56,6 +57,12 @@ processblobs.o: blobstuff/processblobs.cpp
 
 qqueue.o: blobstuff/qqueue.cpp
 	$(CC) $(CFLAGS) blobstuff/qqueue.cpp
+
+blob_interface.o: vchan_code/blob_interface.c
+	gcc $(CFLAGS) vchan_code/blob_interface.c
+
+sel4libvchan.o: vchan_code/sel4libvchan.c
+	gcc $(CFLAGS) vchan_code/sel4libvchan.c
 
 clean:
 	rm -f *.o; \

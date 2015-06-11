@@ -7,7 +7,6 @@
  *
  * @TAG(NICTA_GPL)
  */
-
 #include "includes/sel4libvchan.h"
 #include "includes/libvchan.h"
 #include "includes/vmm_manager.h"
