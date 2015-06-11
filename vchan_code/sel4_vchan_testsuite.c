@@ -24,14 +24,14 @@
 #include <assert.h>
 #include <time.h>
 
-libvchan_t *ctrl;
-static int send_packet(libvchan_t *con, int num_packets);
+static libvchan_t *con;
 
-static int send_packet(libvchan_t *con, int num_packets) {
+static int send_blob(int l, int r, int t, int b) {
 	size_t sz;
 	vchan_packet_t pak;
 	int x, i;
 	char fnack;
+        static int numSends = 0;
 
 	printf("vchan: packet start\n");
 
@@ -56,40 +56,53 @@ static int send_packet(libvchan_t *con, int num_packets) {
 		return -1;
 	}
 
-	printf("vchan: send packets\n");
+	printf("vchan: send packet\n");
+        pak.pnum = numSends++;
+        pak.datah[0] = l;
+        pak.datah[1] = r;
+        pak.datah[2] = t;
+        pak.datah[3] = b;
+        pak.guard = TEST_VCHAN_PAK_GUARD;
 
-	for(x = 0; x < num_packets; x++) {
-		pak.pnum = x;
-		for(i = 0; i < 4; i++) {
-			pak.datah[i] = i + x;
-		}
-		pak.guard = TEST_VCHAN_PAK_GUARD;
-
-		while(libvchan_buffer_space(con) < sizeof(pak));
-		sz = libvchan_send(con, &pak, sizeof(pak));
-		if(sz < sizeof(pak)) {
-			printf("--BAD PACKET -- SEND\n");
-			return -1;
-		}
-	}
-
-	printf("vchan: waiting for ack..\n");
-
-	libvchan_wait(con);
-	sz = libvchan_read(con, &fnack, sizeof(char));
-	if(sz < sizeof(char) || ! fnack) {
-		return -1;
-	}
-
-	printf("vchan: pack end\n");
-	return 0;
+        while(libvchan_buffer_space(con) < sizeof(pak));
+        sz = libvchan_send(con, &pak, sizeof(pak));
+        if(sz < sizeof(pak)) {
+        	printf("--BAD PACKET -- SEND\n");
+        	return -1;
+        }
+        return 0;
+//	for(x = 0; x < num_packets; x++) {
+//		pak.pnum = x;
+//		for(i = 0; i < 4; i++) {
+//			pak.datah[i] = i + x;
+//		}
+//		pak.guard = TEST_VCHAN_PAK_GUARD;
+//
+//		while(libvchan_buffer_space(con) < sizeof(pak));
+//		sz = libvchan_send(con, &pak, sizeof(pak));
+//		if(sz < sizeof(pak)) {
+//			printf("--BAD PACKET -- SEND\n");
+//			return -1;
+//		}
+//	}
+//
+//	printf("vchan: waiting for ack..\n");
+//
+//	libvchan_wait(con);
+//	sz = libvchan_read(con, &fnack, sizeof(char));
+//	if(sz < sizeof(char) || ! fnack) {
+//		return -1;
+//	}
+//
+//	printf("vchan: pack end\n");
+//	return 0;
 }
 
 int vchan_init(void){
 	//int ecount = 0;
 
 	printf("vchan: Creating connection in image\n");
-	ctrl = libvchan_client_init(50, 25);
+	con = libvchan_client_init(50, 25);
 	assert(ctrl != NULL);
 	printf("vchan: Connection Established!\n");
 

@@ -11,6 +11,7 @@
 #include <string.h>
 #include <iostream>
 #include "blobstuff/processblobs.h"
+#include "vchan/blob_interface.h"
 
 #ifndef __SMACCMINTERPRETER_HPP__
 #define __SMACCMINTERPRETER_HPP__
