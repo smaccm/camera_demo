@@ -75,15 +75,15 @@ void SmaccmInterpreter::sendFrame(){
             (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in))){
 	     //perror("sendto");
         }
-       // if(numpackets % 10 == 0){
-       //     usleep(5000);
-       // }
+        //if(numpackets % 10 == 0){
+        //    usleep(5000);
+        //}
       }
       fNewFrame = 0;
       fFrameSent = 1;
       imageMutex.unlock();
     }
-    usleep(100000);
+    usleep(10000);
     //if(fFrameSent){
     //  waitForResponse();
     //}else{
