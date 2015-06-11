@@ -96,6 +96,7 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 				for(int p = 0; p < height; p++){
 					client.receive(receivePacket);
 					lineNum = line[0] & 0xFF;
+					System.out.println(lineNum);
 					for(int i = 1; i < width*3+1; i++){
 						pixels[width*lineNum*3 + (i-1)] = line[i];
 					}
