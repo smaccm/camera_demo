@@ -71,7 +71,6 @@ int send_blob(int l, int r, int t, int b) {
         	printf("--BAD PACKET -- SEND\n");
         	return -1;
         }
-        return 0;
 //	for(x = 0; x < num_packets; x++) {
 //		pak.pnum = x;
 //		for(i = 0; i < 4; i++) {
@@ -87,9 +86,10 @@ int send_blob(int l, int r, int t, int b) {
 //		}
 //	}
 //
-//	printf("vchan: waiting for ack..\n");
-//
-//	libvchan_wait(con);
+	printf("vchan: waiting for ack..\n");
+
+	libvchan_wait(con);
+        return 0;
 //	sz = libvchan_read(con, &fnack, sizeof(char));
 //	if(sz < sizeof(char) || ! fnack) {
 //		return -1;
