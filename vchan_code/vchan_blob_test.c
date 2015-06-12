@@ -6,6 +6,6 @@ int main(int argc, char ** argv){
   vchan_init();
   for(i = 0 ;; i++){
     send_blob(i+1,i+2,i+3,i+4);
-    sleep(1000);
+    sleep(1);
   }
 }
