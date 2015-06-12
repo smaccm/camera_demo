@@ -32,7 +32,11 @@ int send_blob(int l, int r, int t, int b) {
 	int x, i;
 	char fnack;
         static int numSends = 0;
+        static int calledOnce = 0;
 
+        if(calledOnce)
+          return 0;
+        calledOnce = 1;
 	printf("vchan: packet start\n");
 
 	/* Check that buffer data is correct */
