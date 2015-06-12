@@ -34,23 +34,20 @@ int send_blob(int l, int r, int t, int b) {
         static int numSends = 0;
         static int calledOnce = 0;
 
-        if(calledOnce)
-          return 0;
-        calledOnce = 1;
 	printf("vchan: packet start\n");
 
 	/* Check that buffer data is correct */
 	sz = libvchan_data_ready(con);
-	if(sz != 0) {
-		printf("error: incorrect start packet buffer size (data ready) %d\n", sz);
-		return -1;
-	}
-
-	sz = libvchan_buffer_space(con);
-	if(sz != FILE_DATAPORT_MAX_SIZE) {
-		printf("error: incorrect start packet buffer size (bspace) %d\n", sz);
-		return -1;
-	}
+//	if(sz != 0) {
+//		printf("error: incorrect start packet buffer size (data ready) %d\n", sz);
+//		return -1;
+//	}
+//
+//	sz = libvchan_buffer_space(con);
+//	if(sz != FILE_DATAPORT_MAX_SIZE) {
+//		printf("error: incorrect start packet buffer size (bspace) %d\n", sz);
+//		return -1;
+//	}
 
 	/* Start */
 
