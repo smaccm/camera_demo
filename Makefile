@@ -10,14 +10,14 @@ LIBS=$(LIB_INCLUDES) -lusb-1.0 -lboost_chrono -lboost_system -lboost_thread -pth
 
 all: demo
 
-server: server.c
-	$(CC) server.c $(LIBS) -o server
+vchan_test: vchan_blob_test.o vchan_blob_interface.o sel4libvchan.o
+	$(CC) vchan_blob_test.o vchan_blob_interface.o sel4libvchan.o -o vchan_test
 
-demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o timer.o blob.o blobs.o colorlut.o processblobs.o qqueue.o sel4libvchan.o blob_interface.o
+demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o timer.o blob.o blobs.o colorlut.o processblobs.o qqueue.o sel4libvchan.o vchan_blob_interface.o
 	$(CC) chirp.o chirpreceiver.o demo.o timer.o \
           pixy.o pixyinterpreter.o smaccminterpreter.o \
           usblink.o blob.o blobs.o colorlut.o processblobs.o \
-          qqueue.o sel4libvchan.o blob_interface.o $(LIBS) -o demo
+          qqueue.o sel4libvchan.o vchan_blob_interface.o $(LIBS) -o demo
 
 smaccminterpreter.o: smaccminterpreter.cpp
 	$(CC) $(CFLAGS) smaccminterpreter.cpp
@@ -58,12 +58,14 @@ processblobs.o: blobstuff/processblobs.cpp
 qqueue.o: blobstuff/qqueue.cpp
 	$(CC) $(CFLAGS) blobstuff/qqueue.cpp
 
-blob_interface.o: vchan_code/blob_interface.c
-	gcc $(CFLAGS) vchan_code/blob_interface.c
+vchan_blob_interface.o: vchan_code/vchan_blob_interface.c
+	gcc $(CFLAGS) vchan_code/vchan_blob_interface.c
 
 sel4libvchan.o: vchan_code/sel4libvchan.c
 	gcc $(CFLAGS) vchan_code/sel4libvchan.c
 
+vchan_blob_test.o: vchan_code/vchan_blob_test.c
+	$(CC) $(CFLAGS) vchan_code/vchan_blob_test.c
+
 clean:
-	rm -f *.o; \
-	rm -f demo
+	rm -f *.o; rm -f demo
