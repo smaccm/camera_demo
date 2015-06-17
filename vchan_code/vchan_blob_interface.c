@@ -113,3 +113,8 @@ int vchan_init(void){
 
 	return 0;
 }
+
+void vchan_close(void){
+    libvchan_close(con);
+}
+

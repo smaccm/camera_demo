@@ -21,6 +21,7 @@
 #include <iostream>
 #include "pixy.h"
 #include "smaccminterpreter.hpp"
+#include "vchan_code/vchan_blob_interface.h"
 
 #define BLOCK_BUFFER_SIZE    25
 
@@ -31,6 +32,7 @@ void handle_SIGINT(int unused)
   // On CTRL+C - abort! //
 
   printf("\nBye!\n");
+  vchan_close();
   exit(0);
 }
 //defined in pixy.cpp
