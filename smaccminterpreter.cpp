@@ -16,7 +16,7 @@ int SmaccmInterpreter::connect(int port){
 	}
 
     //initiate vchan
-    vchan_init();
+    //vchan_init();
 
 	/* bind the socket to any valid IP address and a specific port */
 
@@ -55,6 +55,12 @@ int SmaccmInterpreter::connect(int port){
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
+void SmaccmInterpreter::compressFrame(){
+  //offset for current packet and number of packets
+  compressedLength = sentWidth*sentHeight*3;
+  compress(compressedPixels+2, &compressedLength, processedPixels, compressedLength);
+}
+
 void SmaccmInterpreter::sendFrame(){
   boost::system::error_code ignored_error;
   int fFrameSent = 0;
@@ -63,17 +69,32 @@ void SmaccmInterpreter::sendFrame(){
     if(fNewFrame){
       imageMutex.lock();
       renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
+      compressFrame();
       int curpacket;
       int curindex;
-      int numpackets = sentHeight;
-      int messagesize = (sentWidth*3 + 1)*sizeof(uint8_t);
+      int packetSize = 7000;
+      int diff;
+      int messageSize;
+      int numpackets = compressedLength/packetSize + 1; //sentHeight;
       
-      for(curpacket = 0, curindex = 0;  curpacket < numpackets; curpacket++, curindex += messagesize-sizeof(uint8_t)){
-        processedPixels[curindex] = curpacket; //hack to keep track of message ids 
-        //printf("sending to address: %d\n", remaddr.sin_addr.s_addr);
-	    if (sendto(recvfd, processedPixels+curindex, messagesize, 0, 
+      for(curpacket = 0, curindex = 0;  curpacket < numpackets; curpacket++, curindex += packetSize){
+        compressedPixels[curindex] = curpacket+1; //hack to keep track of message ids 
+        compressedPixels[curindex+1] = numpackets; //hack to keep track of message ids 
+
+        diff = compressedLength - curpacket*packetSize;
+        if(diff < packetSize){
+          messageSize = diff + 2;
+        }else{
+          messageSize = packetSize + 2;
+        }
+    
+        //printf("sending packet %d of %d message size of %d\n", curpacket, numpackets, messageSize);
+
+	    if (sendto(recvfd, compressedPixels+curindex, messageSize, 0, 
             (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in))){
-	     //perror("sendto");
+        }else{
+          printf("send error\n");
+	      perror("sendto");
         }
         //if(numpackets % 10 == 0){
         //    usleep(5000);
@@ -185,9 +206,9 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
         b = blobs[blobIndex].m_bottom*2;
 
         //send blob over vchan
-        send_blob(l, r, t, b);
+        //send_blob(l, r, t, b);
 
-	    printf("Blob%d (l,r,t,b): (%d,%d,%d,%d)\n", blobIndex, l, r, t, b); 
+	    //printf("Blob%d (l,r,t,b): (%d,%d,%d,%d)\n", blobIndex, l, r, t, b); 
         assert(l <= 320);
         assert(r <= 320);
         assert(t <= 200);
@@ -221,41 +242,6 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
     //}
     return 0;
 }
-
-//with is in pixels not bytes!
-//int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *frame, uint8_t * lines)
-//{
-//    uint16_t x, y;
-//    uint8_t *line;
-//    uint32_t r, g, b;
-//    
-//    //if(imageMutex.try_lock()){
-//      imageMutex.lock();
-//      // skip first line
-//      frame += width;
-//
-//      // don't render top and bottom rows, and left and rightmost columns because of color
-//      // interpolation
-//
-//      for (y=1; y<height-1; y++)
-//      {
-//          line = (uint8_t *)(lines + (y-1)*width*3);
-//          frame++;
-//          for (x=1; x<width-1; x++, frame++)
-//          {
-//              interpolateBayer(width, x, y, frame, r, g, b);
-//              //*line++ = (0x40<<24) | (r<<16) | (g<<8) | (b<<0);
-//              *line++ = (uint8_t)r;
-//              *line++ = (uint8_t)g;
-//              *line++ = (uint8_t)b;
-//          }
-//          frame++;
-//      }
-//      fNewFrame = 1; //announce new frame
-//      imageMutex.unlock();
-//    //}
-//    return 0;
-//}
 
 int SmaccmInterpreter::renderCMV1(uint8_t renderFlags, uint32_t cmodelsLen, float *cmodels, uint16_t width, uint16_t height, uint32_t frameLen, uint8_t *frame) 
 {

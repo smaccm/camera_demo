@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <string.h>
 #include <iostream>
+#include <zlib.h>
 #include "blobstuff/processblobs.h"
 #include "vchan_code/vchan_blob_interface.h"
 
@@ -39,7 +40,9 @@ class SmaccmInterpreter : public PixyInterpreter
     static const int sentWidth = 320;
     static const int sentHeight = 200;
     //r,g,b, each take a byte
-    uint8_t processedPixels[sentWidth*sentHeight*3+1];//extra byte is a hack to keep track of udp message number
+    uint8_t processedPixels[sentWidth*sentHeight*3];//extra byte is a hack to keep track of udp message number
+    uint8_t compressedPixels[sentWidth*sentHeight*3];
+    unsigned long compressedLength;
  
     //used for calculating blobs
     ProcessBlobs m_blobs;
@@ -65,6 +68,7 @@ class SmaccmInterpreter : public PixyInterpreter
     void interpret_data(void * chirp_data[]);
 
     void sendFrame(void);
+    void compressFrame(void);
     void waitForResponse(void);
 };
 

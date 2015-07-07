@@ -16,7 +16,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.zip.*;
 
+import javax.print.attribute.standard.Compression;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -84,46 +86,72 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 
 	public void run() {
 		int[] pixels = new int[width*height*3];
-		byte[] line = new byte[width*3 + 1];
-		DatagramPacket receivePacket = new DatagramPacket(line, line.length); 
+		byte[] compressedPixels = new byte[width*height*3];
+		//byte[] decompressedPixels = new byte[width*height*3];
+		byte[] packet = new byte[width*height*3+2]; //not going to be anywhere near this long
+		DatagramPacket receivePacket = new DatagramPacket(packet, packet.length); 
+		Compressor compressor = new Compressor();
 		
+		int receivedPixelIndex = 0;
+		int packetIndex = packet[0];
+		int totalPackets = packet[1];
 		while(true){
-			
 			
 			try
 			{
-				int lineNum = -1;
-				for(int p = 0; p < height; p++){
-					client.receive(receivePacket);
-					lineNum = line[0] & 0xFF;
-					System.out.println(lineNum);
-					for(int i = 1; i < width*3+1; i++){
-						pixels[width*lineNum*3 + (i-1)] = line[i];
+				client.receive(receivePacket);
+				if(packetIndex != 0 && packet[0] != packetIndex+1){
+					//we lost a packet
+					System.out.println("lost a packet");
+					do{
+						client.receive(receivePacket);
+					}while(packet[0] != 1);
+					receivedPixelIndex = 0;
+				}
+				int receivedLength = receivePacket.getLength();
+				packetIndex = packet[0];
+				totalPackets = packet[1];
+				//rearrange the bytes so we drop the packet statistics
+				
+				System.out.println("received packet "+packet[0]+" of "+packet[1]);
+				for(int i = 2; i < receivedLength; i++){
+					compressedPixels[receivedPixelIndex++] = packet[i];
+					//System.out.println(compressedPixels[receivedPixelIndex - 1] & 0xFF);
+				}
+
+				if(packetIndex == totalPackets){
+					
+//					Inflater decompresser = new Inflater();
+//					decompresser.setInput(decompressedPixels, 0, receivedLength);
+//					int resultLength = decompresser.inflate(compressedPixels);
+//					decompresser.end();
+					byte[] decompressedPixels = compressor.decompress(compressedPixels, receivedPixelIndex);
+					if(decompressedPixels != null){
+						//stupid conversion to integer pixels
+						for(int i = 0; i < decompressedPixels.length; i = i + 3){
+							pixels[i] = decompressedPixels[i+1];
+							pixels[i+1] = decompressedPixels[i+2];
+							pixels[i+2] = decompressedPixels[i];
+						}
+						BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+						WritableRaster raster = (WritableRaster) image.getData();
+						raster.setPixels(0, 0, width, height, pixels);
+						image.setData(raster);
+						i = image;
 					}
+					receivedPixelIndex = 0;
+					packetIndex = 0;
 				}
-				
-				while(lineNum != 199){
-					//we have shifted due to packet loss, keep reading until we get back to 0
-					client.receive(receivePacket);
-					lineNum = line[0] & 0xFF;
-				}
-
-				//if(capturedWholeFrame){
-					BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
-					WritableRaster raster = (WritableRaster) image.getData();
-					raster.setPixels(0, 0, width, height, pixels);
-					image.setData(raster);
-					i = image;
-				//}
-				
-				//on the server side we keep going if anything is received
-
-				//these are acks that are received by the sender to let
-				//her know that we are still listening. after it receives
-				//a single byte of anything it proceeds to send the next frame
-				//client.send(sendPacket);
-
-				
+//				//}
+//				
+//				//on the server side we keep going if anything is received
+//
+//				//these are acks that are received by the sender to let
+//				//her know that we are still listening. after it receives
+//				//a single byte of anything it proceeds to send the next frame
+//				//client.send(sendPacket);
+//
+//				
 			}catch(IOException e)
 			{
 				e.printStackTrace();

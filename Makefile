@@ -6,7 +6,7 @@ CC=g++
 HEADER_INCLUDES=-I /usr/include/libusb-1.0
 LIB_INCLUDES=-L/usr/lib/x86_64-linux-gnu
 CFLAGS=$(HEADER_INCLUDES) -D__LIBPIXY_VERSION__=\"0.3\" -D__LINUX__ -g3 -c
-LIBS=$(LIB_INCLUDES) -lusb-1.0 -lboost_chrono -lboost_system -lboost_thread -pthread
+LIBS=$(LIB_INCLUDES) -lusb-1.0 -lboost_chrono -lboost_system -lboost_thread -pthread -lz
 
 all: demo
 
@@ -68,4 +68,4 @@ vchan_blob_test.o: vchan_code/vchan_blob_test.c
 	$(CC) $(CFLAGS) vchan_code/vchan_blob_test.c
 
 clean:
-	rm -f *.o; rm -f demo
+	rm -f *.o; rm -f demo; rm -f vchan_test;
