@@ -16,7 +16,7 @@ int SmaccmInterpreter::connect(int port){
 	}
 
     //initiate vchan
-    //vchan_init();
+    vchan_init();
 
 	/* bind the socket to any valid IP address and a specific port */
 
@@ -206,7 +206,7 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
         b = blobs[blobIndex].m_bottom*2;
 
         //send blob over vchan
-        //send_blob(l, r, t, b);
+        send_blob(l, r, t, b);
 
 	    //printf("Blob%d (l,r,t,b): (%d,%d,%d,%d)\n", blobIndex, l, r, t, b); 
         assert(l <= 320);
