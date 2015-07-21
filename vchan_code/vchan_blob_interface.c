@@ -28,11 +28,11 @@ static libvchan_t *con;
 
 int send_blob(int l, int r, int t, int b) {
 	size_t sz;
-	vchan_packet_t pak;
 	int x, i;
 	char fnack;
-        static int numSends = 0;
-        static int calledOnce = 0;
+    static int numSends = 0;
+    static int calledOnce = 0;
+    float angles[2];
 
 	printf("vchan: packet start\n");
 
@@ -51,24 +51,18 @@ int send_blob(int l, int r, int t, int b) {
 
 	/* Start */
 
-    int num_packets = 1;
-	sz = libvchan_send(con, &num_packets, sizeof(int));
-	if(sz < sizeof(int)) {
-		printf("--BAD PACKET NUM -- SEND\n");
-		return -1;
-	}
+    //int num_packets = 1;
+	//sz = libvchan_send(con, &num_packets, sizeof(int));
+	//if(sz < sizeof(int)) {
+	//	printf("--BAD PACKET NUM -- SEND\n");
+	//	return -1;
+	//}
 
 	printf("vchan: send packet\n");
-        pak.pnum = numSends++;
-        pak.datah[0] = l;
-        pak.datah[1] = r;
-        pak.datah[2] = t;
-        pak.datah[3] = b;
-        pak.guard = TEST_VCHAN_PAK_GUARD;
 
-        while(libvchan_buffer_space(con) < sizeof(pak));
-        sz = libvchan_send(con, &pak, sizeof(pak));
-        if(sz < sizeof(pak)) {
+        while(libvchan_buffer_space(con) < 2*sizeof(float));
+        sz = libvchan_send(con, angles, 2*sizeof(float));
+        if(sz < 2*sizeof(float)) {
         	printf("--BAD PACKET -- SEND\n");
         	return -1;
         }

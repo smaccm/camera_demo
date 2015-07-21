@@ -11,29 +11,22 @@
 #ifndef __VCHAN_COPY
 #define __VCHAN_COPY
 
-#define VCHAN_EVENT_IRQ 10
+#include "libvchan.h"
+
+#define VCHAN_EVENT_IRQ 92
 
 #define DATATYPE_INT        0
 #define DATATYPE_STRING     1
 
-/* Vchan defines */
+/* Defines for copying/reading data across vchans */
 #define VCHAN_PACKET_SIZE 4096
 #define FILE_DATAPORT_MAX_SIZE 4096
 
 #define NOWAIT_DATA_READY 1
 #define NOWAIT_BUF_SPACE 2
 
-#define VCHAN_CLIENT 0
-#define VCHAN_SERVER 1
-
-#define VCHAN_CLOSED_DATA 0
-#define VCHAN_CLOSED      1
-#define VCHAN_EMPTY_BUF   2
-#define VCHAN_BUF_DATA    3
-#define VCHAN_BUF_FULL    4
-
-#define DPORT_KERN_ADDR 0xEE00000
-#define VCHAN_DATA_TOKEN 0xDEADBEEF
+#define VCHAN_STREAM    1
+#define VCHAN_NOSTREAM  0
 
 /* Used in arguments referring to a vchan instance */
 typedef struct vchan_ctrl {
@@ -44,7 +37,8 @@ typedef struct vchan_ctrl {
 
 /* Used in arguments referring to a vchan instance */
 typedef struct vchan_alert {
-    int alert;
+    int buffer_space;
+    int data_ready;
     int dest;
     int port;
 } vchan_alert_t;
@@ -74,23 +68,6 @@ typedef struct vchan_connect {
     unsigned event_mon;
 } vchan_connect_t;
 
-void volatile_copy(void *dest, void *rec, int size);
-
-/* Used for helloworld testsuite */
-#define MSG_HELLO   0
-#define MSG_ACK     1
-#define MSG_CONC    2
-#define TEST_VCHAN_PAK_GUARD    0xBEEDEADA
-
-typedef struct vchan_header {
-    int msg_type;
-    int len;
-} vchan_header_t;
-
-typedef struct vchan_packet {
-    int pnum;
-    int datah[4];
-    int guard;
-} vchan_packet_t;
+int libvchan_readwrite(libvchan_t *ctrl, void *data, size_t size, int cmd, int stream);
 
 #endif

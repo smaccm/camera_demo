@@ -72,7 +72,7 @@ void SmaccmInterpreter::sendFrame(){
       compressFrame();
       int curpacket;
       int curindex;
-      int packetSize = 7000;
+      int packetSize = 1470;
       int diff;
       int messageSize;
       int numpackets = compressedLength/packetSize + 1; //sentHeight;

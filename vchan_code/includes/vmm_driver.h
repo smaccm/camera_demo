@@ -36,19 +36,13 @@
 #include "vmm_manager.h"
 #include "vchan_copy.h"
 
-
-#define READ_WAIT 0
-#define WRITE_WAIT 1
-
-#define CLOSED_SERVER 	0
-#define NO_BLOCK	 	1
-
 int reg_event_irq_handler(void);
 void free_event_irq_handler(void);
 
 int call_into_hypervisor(int cmd, void *data, size_t sz, vmcall_args_t *vmcall);
 
 int init_event_thread(void);
+int event_thread_info(int domain, int port, int type);
 
 int new_event_instance(int domain, int port, int eventfd, vchan_alert_t *event_mon, int self);
 void rem_event_instance(int domain, int port);

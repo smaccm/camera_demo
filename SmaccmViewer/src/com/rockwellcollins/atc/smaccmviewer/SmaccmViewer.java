@@ -113,7 +113,7 @@ public class SmaccmViewer extends JPanel implements Runnable, ActionListener{
 				totalPackets = packet[1];
 				//rearrange the bytes so we drop the packet statistics
 				
-				System.out.println("received packet "+packet[0]+" of "+packet[1]);
+				//System.out.println("received packet "+packet[0]+" of "+packet[1]);
 				for(int i = 2; i < receivedLength; i++){
 					compressedPixels[receivedPixelIndex++] = packet[i];
 					//System.out.println(compressedPixels[receivedPixelIndex - 1] & 0xFF);
