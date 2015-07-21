@@ -61,6 +61,7 @@ int send_blob(int l, int r, int t, int b) {
 	printf("vchan: send packet\n");
 
         while(libvchan_buffer_space(con) < 2*sizeof(float));
+        printf("float size:%d", 2*sizeof(float));
         sz = libvchan_send(con, angles, 2*sizeof(float));
         if(sz < 2*sizeof(float)) {
         	printf("--BAD PACKET -- SEND\n");
