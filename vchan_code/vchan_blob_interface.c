@@ -34,12 +34,23 @@ int send_blob(int l, int r, int t, int b) {
 	sz = libvchan_data_ready(con);
 	printf("vchan: send packet\n");
 
-        while(libvchan_buffer_space(con) < 2*sizeof(float));
-        sz = libvchan_send(con, angles, 2*sizeof(float));
-        if(sz < 2*sizeof(float)) {
-        	printf("--BAD PACKET -- SEND\n");
-        	return -1;
-        }
+    int xmid = ((r - l) / 2) - 160;
+    int ymid = ((b - t) / 2) - 100;
+
+    angles[0] = ((float) xmid)*(0.00410666);
+    angles[1] = ((float) ymid)*(0.00410666);
+
+    printf("x angle: %f rads\n", angles[0]);
+    printf("y angle: %f rads\n", angles[1]);
+    printf("\n");
+
+    while(libvchan_buffer_space(con) < 2*sizeof(float));
+    sz = libvchan_send(con, angles, 2*sizeof(float));
+    if(sz < 2*sizeof(float)) {
+    	printf("--BAD PACKET -- SEND\n");
+    	return -1;
+    }
+
 	printf("vchan: waiting for ack..\n");
 
 	libvchan_wait(con);
