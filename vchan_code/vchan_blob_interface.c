@@ -34,8 +34,10 @@ int send_blob(int l, int r, int t, int b) {
 	sz = libvchan_data_ready(con);
 	printf("vchan: send packet\n");
 
-    int xmid = ((r - l) / 2) - 160 + l;
-    int ymid = ((b - t) / 2) - 100 + t;
+    int xmid = ((r + l) / 2) - 160;
+    int ymid = ((b + t) / 2) - 100;
+
+    ymid = -1.0*ymid; //sign change
 
     angles[0] = ((float) xmid)*(0.00410666);
     angles[1] = ((float) ymid)*(0.00410666);
