@@ -27,12 +27,13 @@
 static libvchan_t *con;
 
 int send_blob(int l, int r, int t, int b) {
-	size_t sz;
+    size_t sz;
     float angles[2];
+    char ack;
 
-	printf("vchan: packet start\n");
-	sz = libvchan_data_ready(con);
-	printf("vchan: send packet\n");
+    printf("vchan: packet start\n");
+    sz = libvchan_data_ready(con);
+    printf("vchan: send packet\n");
 
     int xmid = ((r + l) / 2) - 160;
     int ymid = ((b + t) / 2) - 100;
@@ -53,20 +54,21 @@ int send_blob(int l, int r, int t, int b) {
     	return -1;
     }
 
-	printf("vchan: waiting for ack..\n");
+    printf("vchan: waiting for ack..\n");
+    libvchan_wait(con);
+    libvchan_read(con, &ack, sizeof(char));
+    printf("vchan: received ack\n");
 
-	libvchan_wait(con);
     return 0;
 }
 
 int vchan_init(void){
+    printf("vchan: Creating connection in image\n");
+    con = libvchan_client_init(50, 25);
+    assert(con != NULL);
+    printf("vchan: Connection Established!\n");
 
-	printf("vchan: Creating connection in image\n");
-	con = libvchan_client_init(50, 25);
-	assert(con != NULL);
-	printf("vchan: Connection Established!\n");
-
-	return 0;
+    return 0;
 }
 
 void vchan_close(void){
