@@ -208,7 +208,14 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
         t = blobs[blobIndex].m_top*2;
         b = blobs[blobIndex].m_bottom*2;
 
-        perim = l + r + t + b;
+        assert(l <= 320);
+        assert(r <= 320);
+        assert(t <= 200);
+        assert(b <= 200);
+        assert(l <= r);
+        assert(t <= b);
+
+        perim = r - l + b - t;
         if(largestPerim < perim){
           //we will only send the largest bounding box over the vchan
           largestPerim = perim;
@@ -219,12 +226,6 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
         }
 
 	    //printf("Blob%d (l,r,t,b): (%d,%d,%d,%d)\n", blobIndex, l, r, t, b); 
-        assert(l <= 320);
-        assert(r <= 320);
-        assert(t <= 200);
-        assert(b <= 200);
-        assert(l <= r);
-        assert(t <= b);
 
         int i;
         for(i = l*3; i <= 3*r; i = i + 3){
