@@ -198,15 +198,25 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
       }
 
       int blobIndex;
+      int ll, rr, tt, bb;
+      int largestPerim = 0;
       for(blobIndex = 0; blobIndex < numBlobs; blobIndex++){
         int l, r, t, b;
+        int perim;
         l = blobs[blobIndex].m_left*2;
         r = blobs[blobIndex].m_right*2;
         t = blobs[blobIndex].m_top*2;
         b = blobs[blobIndex].m_bottom*2;
 
-        //send blob over vchan
-        send_blob(l, r, t, b);
+        perim = l + r + t + b;
+        if(largestPerim < perim){
+          //we will only send the largest bounding box over the vchan
+          largestPerim = perim;
+          ll = l;
+          rr = r;
+          tt = t;
+          bb = b;
+        }
 
 	    //printf("Blob%d (l,r,t,b): (%d,%d,%d,%d)\n", blobIndex, l, r, t, b); 
         assert(l <= 320);
@@ -235,8 +245,10 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
           lines[i + r*3+2] = 0;  
         }
 	  }
-
-
+      if(largestPerim != 0){
+        //send blob over vchan
+        send_blob(ll, rr, tt, bb);
+      }
       //fNewFrame = 1; //announce new frame
       //imageMutex.unlock();
     //}
