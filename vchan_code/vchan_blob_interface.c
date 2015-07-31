@@ -28,28 +28,28 @@ static libvchan_t *con;
 
 int send_blob(int l, int r, int t, int b) {
     size_t sz;
-    float angles[2];
+    float data[4];
     char ack;
-
+    
     printf("vchan: packet start\n");
     sz = libvchan_data_ready(con);
     printf("vchan: send packet\n");
 
-    int xmid = ((r + l) / 2) - 160;
-    int ymid = ((b + t) / 2) - 100;
+   // int xmid = ((r + l) / 2) - 160;
+   // int ymid = ((b + t) / 2) - 100;
 
-    ymid = -1.0*ymid; //sign change
+  //  ymid = -1.0*ymid; //sign change
 
-    angles[0] = ((float) xmid)*(0.00410666);
-    angles[1] = ((float) ymid)*(0.00410666);
+  //  data[0] = ((float) xmid)*(0.00410666);
+  //  data[1] = ((float) ymid)*(0.00410666);
+    data[0] = l; 
+    data[1] = r;
+    data[2] = t;
+    data[3] = b;
 
-    printf("x angle: %f rads\n", angles[0]);
-    printf("y angle: %f rads\n", angles[1]);
-    printf("\n");
-
-    while(libvchan_buffer_space(con) < 2*sizeof(float));
-    sz = libvchan_send(con, angles, 2*sizeof(float));
-    if(sz < 2*sizeof(float)) {
+    while(libvchan_buffer_space(con) < 4*sizeof(int));
+    sz = libvchan_send(con, data, 4*sizeof(int));
+    if(sz < 4*sizeof(int)) {
     	printf("--BAD PACKET -- SEND\n");
     	return -1;
     }
