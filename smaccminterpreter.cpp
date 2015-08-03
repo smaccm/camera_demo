@@ -9,29 +9,13 @@ int SmaccmInterpreter::connect(){
 }
 
 int SmaccmInterpreter::connect(int port){
-
-  fNewFrame = 0;
   vchan_init();
-  boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
 void SmaccmInterpreter::compressFrame(){
-  //offset for current packet and number of packets
-  compressedLength = sentWidth*sentHeight*3;
-  compress(compressedPixels+2, &compressedLength, processedPixels, compressedLength);
 }
 
 void SmaccmInterpreter::sendFrame(){
-  boost::system::error_code ignored_error;
-  for(;;){
-    //usleep(30000);
-    if(fNewFrame){
-      imageMutex.lock();
-      renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
-      imageMutex.unlock();
-    }
-    usleep(10000);
-  }
 }
 
 void SmaccmInterpreter::waitForResponse(){
@@ -217,23 +201,17 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
             break;
           case FOURCC('C', 'M', 'V', '1'):
             
-            if(imageMutex.try_lock()){
-              cmodelsLen = *(uint32_t *)chirp_data[2];
-              cmodels = (float *)chirp_data[3];
-              width = *(uint16_t *)chirp_data[4];
-              height = *(uint16_t *)chirp_data[5];
-              frame_len = *(uint32_t *)chirp_data[6];
-              pFrame = (uint8_t *)chirp_data[7];
-			  assert(width == sentWidth);
-			  assert(height == sentHeight);
-			  assert(frame_len = width*height);
+             cmodelsLen = *(uint32_t *)chirp_data[2];
+             cmodels = (float *)chirp_data[3];
+             width = *(uint16_t *)chirp_data[4];
+             height = *(uint16_t *)chirp_data[5];
+             frame_len = *(uint32_t *)chirp_data[6];
+             pFrame = (uint8_t *)chirp_data[7];
+	     assert(width == sentWidth);
+	     assert(height == sentHeight);
+	     assert(frame_len = width*height);
 
-              fNewFrame = 1;
- //             printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
-              imageMutex.unlock();
-            }else{
- 	        //  printf("didn't get lock\n");
-            }
+            renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
             break;
           default:
             printf("libpixy: Chirp hint [%u] not recognized.\n", chirp_type);
