@@ -28,6 +28,7 @@ void SmaccmInterpreter::sendFrame(){
     if(fNewFrame){
       imageMutex.lock();
       renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
+      imageMutex.unlock();
     }
     usleep(10000);
   }
