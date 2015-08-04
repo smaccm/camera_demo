@@ -16,7 +16,7 @@ int SmaccmInterpreter::connect(int port){
 	}
 
     //initiate vchan
-    vchan_init();
+	//    vchan_init();
 
 	/* bind the socket to any valid IP address and a specific port */
 
@@ -52,12 +52,35 @@ int SmaccmInterpreter::connect(int port){
   int recvlen = recvfrom(recvfd, &val, 1, 0, (struct sockaddr *)&remaddr, &addrlen);
   printf("Client connected at address: %d! address length is: %d\n", remaddr.sin_addr.s_addr, addrlen);
   fNewFrame = 1;
+  remove("attack.rgb");
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
 void SmaccmInterpreter::compressFrame(){
   //offset for current packet and number of packets
   compressedLength = sentWidth*sentHeight*3;
+
+  // Corrupt the stream if under attack
+  static char corrupt[sentWidth*sentHeight] = {0};
+  FILE *fp = fopen("attack.rgb", "rb");
+  if (fp != NULL) {
+    for (int i = 0; i < 3000; i++) {
+      corrupt[rand() % (sentWidth * sentHeight)] = 1;
+    }
+
+    for (int i = 0; i < sentWidth*sentHeight; i++) {
+      int r = fgetc(fp);
+      int g = fgetc(fp);
+      int b = fgetc(fp);
+      if (corrupt[i]) {
+	processedPixels[3*i + 1] = r;
+	processedPixels[3*i + 2] = g;
+	processedPixels[3*i + 3] = b;
+      }
+    }
+    fclose(fp);
+  }
+
   compress(compressedPixels+2, &compressedLength, processedPixels, compressedLength);
 }
 
@@ -248,7 +271,7 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
 	  }
       if(largestPerim != 0){
         //send blob over vchan
-        send_blob(ll, rr, tt, bb);
+	//        send_blob(ll, rr, tt, bb);
       }
       //fNewFrame = 1; //announce new frame
       //imageMutex.unlock();
