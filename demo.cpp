@@ -27,28 +27,24 @@
 
 // Pixy Block buffer // 
 struct Block blocks[BLOCK_BUFFER_SIZE];
+
 void handle_SIGINT(int unused)
 {
   // On CTRL+C - abort! //
-
-  printf("\nBye!\n");
   vchan_close();
   exit(0);
 }
+
 //defined in pixy.cpp
 extern SmaccmInterpreter interpreter;
+
 int main(int argc, char * argv[])
 {
-  int      index;
-  int      blocks_copied;
-  int      pixy_init_status;
+  int index;
+  int blocks_copied;
+  int pixy_init_status;
 
- // if(argc != 2){
- //   std::cerr << "Usage: demo <port>" << std::endl;
- //     return 1;
- // }
-
-  // Catch CTRL+C (SIGINT) signals //
+  // Catch CTRL+C (SIGINT) signals
   signal(SIGINT, handle_SIGINT);
 
   printf("Hello Pixy:\n libpixyusb Version: %s\n", __LIBPIXY_VERSION__);
@@ -58,7 +54,6 @@ int main(int argc, char * argv[])
   int8_t renderflags;
   uint16_t width, height, sentWidth, sentHeight;
   uint32_t numPixels;
-  
 
   //wait for client connection
   if(argc == 2){
@@ -67,16 +62,15 @@ int main(int argc, char * argv[])
     interpreter.connect();
   }
 
-  // Connect to Pixy //
+  // Connect to Pixy
   pixy_init_status = pixy_init();
 
-  // Was there an error initializing pixy? //
+  // Was there an error initializing pixy?
   if(!pixy_init_status == 0)
   {
-    // Error initializing Pixy //
+    // Error initializing Pixy
     printf("pixy_init(): ");
     pixy_error(pixy_init_status);
-
     return pixy_init_status;
   }
   
@@ -96,16 +90,6 @@ int main(int argc, char * argv[])
   
   int t = 0;
   for(;;){
-
     usleep(100000000);
   }
-     
 }  
-   
-   
-   
-   
-   
-   
-   
-   
