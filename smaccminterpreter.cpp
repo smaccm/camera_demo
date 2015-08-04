@@ -1,5 +1,7 @@
 #include "smaccminterpreter.hpp"
 
+#define PACKET_SIZE 65000
+
 SmaccmInterpreter::SmaccmInterpreter() : 
   m_blobs() {
 }
@@ -95,7 +97,7 @@ void SmaccmInterpreter::sendFrame(){
       compressFrame();
       int curpacket;
       int curindex;
-      int packetSize = 1470;
+      int packetSize = PACKET_SIZE;
       int diff;
       int messageSize;
       int numpackets = compressedLength/packetSize + 1; //sentHeight;
