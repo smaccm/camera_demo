@@ -1,5 +1,6 @@
 package com.rockwellcollins.atc.smaccmviewer;
 
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -48,11 +49,13 @@ public class SmaccmViewer {
 			public void paintComponent(Graphics g) {
 				Image image = imageRef.get();
 				if (image != null) {
-					g.drawImage(image, 0, 0, null);
+					Dimension size = getSize();
+					g.drawImage(image, 0, 0, size.width, size.height, 0, 0,
+							Constants.WIDTH, Constants.HEIGHT, null);
 				}
 			}
 		};
-		
+
 		frame.getContentPane().add(panel);
 
 		new Timer(50, new ActionListener() {
