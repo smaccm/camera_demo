@@ -15,7 +15,6 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 public class SmaccmViewer {
-
 	public static void main(String[] args) throws IOException {
 		if (args.length < 1) {
 			System.out.println("Usage: java SmaccmViewer.jar [hostname|ip address] <port>");
@@ -39,9 +38,9 @@ public class SmaccmViewer {
 	private static void createUI(final AtomicReference<Image> imageRef) {
 		final JFrame frame = new JFrame();
 		frame.setTitle("SmaccmCopter Video");
-		frame.setSize(Constants.WIDTH, Constants.HEIGHT);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
+		frame.setSize(Constants.WIDTH, Constants.HEIGHT);
 
 		@SuppressWarnings("serial")
 		final JPanel panel = new JPanel() {
@@ -50,13 +49,14 @@ public class SmaccmViewer {
 				Image image = imageRef.get();
 				if (image != null) {
 					Dimension size = getSize();
-					g.drawImage(image, 0, 0, size.width, size.height, 0, 0,
-							Constants.WIDTH, Constants.HEIGHT, null);
+					g.drawImage(image, 0, 0, size.width, size.height, 1, 1, Constants.WIDTH - 2,
+							Constants.HEIGHT - 2, null);
 				}
 			}
 		};
 
 		frame.getContentPane().add(panel);
+		// frame.pack();
 
 		new Timer(50, new ActionListener() {
 			@Override

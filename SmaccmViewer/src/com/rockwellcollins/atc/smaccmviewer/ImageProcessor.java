@@ -38,8 +38,10 @@ public class ImageProcessor extends Thread {
 					image.setData(raster);
 					imageRef.set(image);
 				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			} catch (InterruptedException | ArrayIndexOutOfBoundsException e) {
+				if (Constants.VERBOSE) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -52,7 +54,9 @@ public class ImageProcessor extends Thread {
 			int len = inflater.inflate(result);
 			return Arrays.copyOf(result, len);
 		} catch (DataFormatException e) {
-			e.printStackTrace();
+			if (Constants.VERBOSE) {
+				e.printStackTrace();
+			}
 			return null;
 		}
 	}

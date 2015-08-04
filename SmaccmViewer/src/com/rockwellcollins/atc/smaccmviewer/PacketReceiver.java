@@ -35,25 +35,32 @@ public class PacketReceiver extends Thread {
 			try {
 				socket.receive(datagramPacket);
 			} catch (IOException e) {
-				e.printStackTrace();
+				if (Constants.VERBOSE) {
+					e.printStackTrace();
+				}
 				continue;
 			}
-			
+
 			if (reset) {
 				if (packet[0] != 1) {
-					System.out.println("Missed a packet, expected 1 but got " + packet[0]);
+					if (Constants.VERBOSE) {
+						System.out.println("Missed a packet, expected 1 but got " + packet[0]);
+					}
 					continue;
 				}
 				expectedPacket = 1;
 				totalPackets = packet[1];
 				frameLength = 0;
 				reset = false;
-			} else if (packet[0] != expectedPacket ) {
-				System.out.println("Missed a packet, expected " + expectedPacket + " but got " + packet[0]);
+			} else if (packet[0] != expectedPacket) {
+				if (Constants.VERBOSE) {
+					System.out.println("Missed a packet, expected " + expectedPacket + " but got "
+							+ packet[0]);
+				}
 				reset = true;
 				continue;
 			}
-			
+
 			int length = datagramPacket.getLength() - 2;
 			System.arraycopy(packet, 2, frame, frameLength, length);
 			frameLength += length;
