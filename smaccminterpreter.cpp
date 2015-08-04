@@ -63,7 +63,7 @@ void SmaccmInterpreter::compressFrame(){
   unsigned char* compressedImage = 0;
 
   tjhandle jpegCompressor = tjInitCompress();
-  tjCompress2(jpegCompressor, processedPixels + 1, WIDTH, 0, HEIGHT, TJPF_RGB,
+  tjCompress2(jpegCompressor, processedPixels, WIDTH, 0, HEIGHT, TJPF_RGB,
             &compressedImage, &jpegSize, TJSAMP_444, JPEG_QUALITY,
             TJFLAG_FASTDCT);
   tjDestroy(jpegCompressor);
@@ -131,9 +131,9 @@ void SmaccmInterpreter::corruptFrame(){
       int g = fgetc(fp);
       int b = fgetc(fp);
       if (corrupted[i]) {
-	processedPixels[3*i + 1] = r;
-	processedPixels[3*i + 2] = g;
-	processedPixels[3*i + 3] = b;
+	processedPixels[3*i + 0] = r;
+	processedPixels[3*i + 1] = g;
+	processedPixels[3*i + 2] = b;
       }
     }
     fclose(fp);
@@ -280,7 +280,7 @@ int SmaccmInterpreter::renderCMV1(uint8_t renderFlags, uint32_t cmodelsLen, floa
 
     m_blobs.process(Frame8(frame, width, height), &numBlobs, &blobs, &numCCBlobs, &ccBlobs, &numQvals, &qVals);
 
-    renderBA81(width, height, frame, processedPixels+1, numBlobs, blobs);
+    renderBA81(width, height, frame, processedPixels, numBlobs, blobs);
     //printf("num blobs: %d\n", numBlobs);
 
     return 0;
