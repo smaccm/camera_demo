@@ -56,7 +56,6 @@ public class SmaccmViewer {
 		};
 
 		frame.getContentPane().add(panel);
-		// frame.pack();
 
 		new Timer(50, new ActionListener() {
 			@Override

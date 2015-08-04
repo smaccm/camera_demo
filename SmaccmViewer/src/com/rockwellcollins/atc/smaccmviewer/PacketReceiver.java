@@ -34,43 +34,43 @@ public class PacketReceiver extends Thread {
 		while (true) {
 			try {
 				socket.receive(datagramPacket);
-			} catch (IOException e) {
+
+				if (reset) {
+					if (packet[0] != 1) {
+						if (Constants.VERBOSE) {
+							System.out.println("Missed a packet, expected 1 but got " + packet[0]);
+						}
+						continue;
+					}
+					expectedPacket = 1;
+					totalPackets = packet[1];
+					frameLength = 0;
+					reset = false;
+				} else if (packet[0] != expectedPacket) {
+					if (Constants.VERBOSE) {
+						System.out.println("Missed a packet, expected " + expectedPacket
+								+ " but got " + packet[0]);
+					}
+					reset = true;
+					continue;
+				}
+
+				int length = datagramPacket.getLength() - 2;
+				System.arraycopy(packet, 2, frame, frameLength, length);
+				frameLength += length;
+				if (expectedPacket == totalPackets) {
+					byte[] copy = new byte[frameLength];
+					System.arraycopy(frame, 0, copy, 0, frameLength);
+					frames.add(copy);
+					reset = true;
+				} else {
+					expectedPacket++;
+				}
+			} catch (IOException | ArrayIndexOutOfBoundsException e) {
 				if (Constants.VERBOSE) {
 					e.printStackTrace();
 				}
 				continue;
-			}
-
-			if (reset) {
-				if (packet[0] != 1) {
-					if (Constants.VERBOSE) {
-						System.out.println("Missed a packet, expected 1 but got " + packet[0]);
-					}
-					continue;
-				}
-				expectedPacket = 1;
-				totalPackets = packet[1];
-				frameLength = 0;
-				reset = false;
-			} else if (packet[0] != expectedPacket) {
-				if (Constants.VERBOSE) {
-					System.out.println("Missed a packet, expected " + expectedPacket + " but got "
-							+ packet[0]);
-				}
-				reset = true;
-				continue;
-			}
-
-			int length = datagramPacket.getLength() - 2;
-			System.arraycopy(packet, 2, frame, frameLength, length);
-			frameLength += length;
-			if (expectedPacket == totalPackets) {
-				byte[] copy = new byte[frameLength];
-				System.arraycopy(frame, 0, copy, 0, frameLength);
-				frames.add(copy);
-				reset = true;
-			} else {
-				expectedPacket++;
 			}
 		}
 	}
