@@ -83,7 +83,7 @@ void SmaccmInterpreter::sendFrame() {
   }
 }
 
-#define STEPS_PER_FRAME 5
+#define STEPS_PER_FRAME 3
 
 void SmaccmInterpreter::corruptFrame(){
   // Corrupt the stream if under attack
@@ -97,10 +97,11 @@ void SmaccmInterpreter::corruptFrame(){
   if (vaddr == NULL) {
     FILE *fp = fopen("attack.rgb", "rb");
     if (fp != NULL) {
-      struct stat statbuf;
-      fstat(fileno(fp), &statbuf);
-      vaddr = (uint8_t *) mmap(NULL, statbuf.st_size, PROT_READ, MAP_SHARED, fileno(fp), 0);
-      numAttackFrames = statbuf.st_size / (3 * WIDTH * HEIGHT);
+      fseek(fp, 0, SEEK_END);
+      int size = ftell(fp);
+      vaddr = (uint8_t *) mmap(NULL, size, PROT_READ, MAP_SHARED, fileno(fp), 0);
+      numAttackFrames = size / (3 * WIDTH * HEIGHT);
+      fclose(fp);
     }
   }
 
@@ -113,7 +114,7 @@ void SmaccmInterpreter::corruptFrame(){
     }
 
     if (pixelsToCorrupt < 10000) {
-      pixelsToCorrupt += 200;
+      pixelsToCorrupt += 150;
     }
 
     for (int i = 0; i < pixelsToCorrupt; i++) {
