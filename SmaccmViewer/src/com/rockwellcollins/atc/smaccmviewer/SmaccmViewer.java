@@ -11,7 +11,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -46,7 +45,7 @@ public class SmaccmViewer extends Thread {
 
 	private final String serverName;
 	private final int port;
-	private AtomicReference<Image> imageRef = new AtomicReference<>();
+	private volatile Image image;
 
 	@Override
 	public void run() {
@@ -65,8 +64,8 @@ public class SmaccmViewer extends Thread {
 					socket.receive(datagramPacket);
 					int len = datagramPacket.getLength();
 					byte[] buf = Arrays.copyOf(packet, len);
+					image = ImageIO.read(new ByteArrayInputStream(buf));
 
-					imageRef.set(ImageIO.read(new ByteArrayInputStream(buf)));
 					numFrames++;
 					if (numFrames == 100) {
 						long stop = System.currentTimeMillis();
@@ -95,7 +94,6 @@ public class SmaccmViewer extends Thread {
 		final JPanel panel = new JPanel() {
 			@Override
 			public void paintComponent(Graphics g) {
-				Image image = imageRef.get();
 				if (image != null) {
 					Dimension size = getSize();
 					g.drawImage(image, 0, 0, size.width, size.height, 1, 1, IMG_WIDTH - 2,
