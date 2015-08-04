@@ -28,7 +28,7 @@ static libvchan_t *con;
 
 int send_blob(int l, int r, int t, int b) {
     size_t sz;
-    float data[4];
+    int data[4];
     char ack;
     
     printf("vchan: packet start\n");
