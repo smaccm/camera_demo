@@ -11,6 +11,7 @@
 #include <string.h>
 #include <iostream>
 #include <zlib.h>
+#include <turbojpeg.h>
 #include "blobstuff/processblobs.h"
 #include "vchan_code/vchan_blob_interface.h"
 

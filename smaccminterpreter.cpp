@@ -60,54 +60,93 @@ int SmaccmInterpreter::connect(int port){
 #define ATTACK_FRAMES = 5;
 
 void SmaccmInterpreter::compressFrame(){
-  // Corrupt the stream if under attack
-  static char corrupted[sentWidth*sentHeight] = {0};
-  static int pixelsToCorrupt = 0;
-  static int attackFrame = 0;
+  const int JPEG_QUALITY = 75; 
+  const int COLOR_COMPONENTS = 3;
+  int _width = 320;
+  int _height = 200;
+  long unsigned int _jpegSize = 0;
+  int uncompressedLength = _width*_height*COLOR_COMPONENTS;
+  unsigned char* _compressedImage = 0; //!< Memory is allocated by tjCompress2 if _jpegSize == 0
+  //unsigned char buffer[uncompressedLength]; //!< Contains the uncompressed image
+  //FILE * fp = fopen("skull.rgb", "r");
 
-  FILE *fp = fopen("attack.rgb", "rb");
-  if (fp != NULL) {
-    fseek(fp, 3 * sentWidth * sentHeight * attackFrame);
-    attackFrame = (attackFrame + 1) % ATTACK_FRAMES;
-      
-    if (pixelsToCorrupt < 10000) {
-      pixelsToCorrupt += 100;
-    }
+  //size_t readByes = fread(&buffer, sizeof(unsigned char), uncompressedLength, fp); 
+  //fclose(fp);
+  tjhandle _jpegCompressor = tjInitCompress();
+  compressedLength = 1;
+  tjCompress2(_jpegCompressor, processedPixels, _width, 0, _height, TJPF_RGB,
+            &_compressedImage, &_jpegSize, TJSAMP_444, JPEG_QUALITY,
+            TJFLAG_FASTDCT);
 
-    for (int i = 0; i < pixelsToCorrupt; i++) {
-      corrupted[rand() % (sentWidth * sentHeight)] = 1;
-    }
+  //tjCompress2(_jpegCompressor, buffer, _width, 0, _height, TJPF_RGB,
+  //          &_compressedImage, &_jpegSize, TJSAMP_444, JPEG_QUALITY,
+  //          TJFLAG_FASTDCT);
 
-    for (int i = 0; i < sentWidth*sentHeight; i++) {
-      int r = fgetc(fp);
-      int g = fgetc(fp);
-      int b = fgetc(fp);
-      if (corrupted[i]) {
-	processedPixels[3*i + 1] = r;
-	processedPixels[3*i + 2] = g;
-	processedPixels[3*i + 3] = b;
-      }
-    }
-    fclose(fp);
+  //FILE *fpout = fopen("skull.jpeg", "w");
+  //fwrite(_compressedImage, sizeof(unsigned char), _jpegSize, fpout);
+  //fclose(fpout);
+  tjDestroy(_jpegCompressor);
+  
+  //to free the memory allocated by TurboJPEG (either by tjAlloc(), 
+  //or by the Compress/Decompress) after you are done working on it:
+  int i;
+  for(i = 0; i < _jpegSize; i++){
+    compressedPixels[i] = _compressedImage[i];
   }
+  compressedLength = _jpegSize;
+  tjFree(_compressedImage);
 
-  FILE *ofp = fopen("image.ppm", "wb");
-  fprintf(ofp, "P6 %d %d 255\n", sentWidth, sentHeight);
-  for (int i = 0; i < sentWidth * sentHeight; i++) {
-    int r = processedPixels[3*i + 1];
-    int g = processedPixels[3*i + 2];
-    int b = processedPixels[3*i + 3];
-    fprintf(ofp, "%c%c%c", r, g, b);
-  }
-  fclose(ofp);
-
-  if (system("convert image.ppm image.jpg") != 0) {
-    printf("Please install imagemagick\n");
-    exit(-1);
-  }
-
-  remove("image.ppm");
 }
+
+//void SmaccmInterpreter::compressFrame(){
+//  // Corrupt the stream if under attack
+//  static char corrupted[sentWidth*sentHeight] = {0};
+//  static int pixelsToCorrupt = 0;
+//  static int attackFrame = 0;
+//
+//  FILE *fp = fopen("attack.rgb", "rb");
+//  if (fp != NULL) {
+//    fseek(fp, 3 * sentWidth * sentHeight * attackFrame);
+//    attackFrame = (attackFrame + 1) % ATTACK_FRAMES;
+//      
+//    if (pixelsToCorrupt < 10000) {
+//      pixelsToCorrupt += 100;
+//    }
+//
+//    for (int i = 0; i < pixelsToCorrupt; i++) {
+//      corrupted[rand() % (sentWidth * sentHeight)] = 1;
+//    }
+//
+//    for (int i = 0; i < sentWidth*sentHeight; i++) {
+//      int r = fgetc(fp);
+//      int g = fgetc(fp);
+//      int b = fgetc(fp);
+//      if (corrupted[i]) {
+//	processedPixels[3*i + 1] = r;
+//	processedPixels[3*i + 2] = g;
+//	processedPixels[3*i + 3] = b;
+//      }
+//    }
+//    fclose(fp);
+//  }
+//
+//  FILE *ofp = fopen("image.ppm", "wb");
+//  fprintf(ofp, "P6 %d %d 255\n", sentWidth, sentHeight);
+//  for (int i = 0; i < sentWidth * sentHeight; i++) {
+//    int r = processedPixels[3*i + 1];
+//    int g = processedPixels[3*i + 2];
+//    int b = processedPixels[3*i + 3];
+//    fprintf(ofp, "%c%c%c", r, g, b);
+//  }
+//  fclose(ofp);
+//
+//  if (system("convert image.ppm image.jpg") != 0) {
+//    printf("Please install imagemagick\n");
+//    exit(-1);
+//  }
+//
+//  remove("image.ppm");
+//}
 
 void SmaccmInterpreter::sendFrame() {
   boost::system::error_code ignored_error;
@@ -118,13 +157,13 @@ void SmaccmInterpreter::sendFrame() {
       renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
       compressFrame();
       
-      uint8_t buf[PACKET_SIZE];
-      FILE *fp = fopen("image.jpg", "rb");
-      int len = fread(buf, sizeof(uint8_t), PACKET_SIZE, fp);
-      fclose(fp);
-      remove("image.jpg");
+      //uint8_t buf[PACKET_SIZE];
+      //FILE *fp = fopen("image.jpg", "rb");
+      //int len = fread(buf, sizeof(uint8_t), PACKET_SIZE, fp);
+      //fclose(fp);
+      //remove("image.jpg");
       
-      if (!sendto(recvfd, buf, len, 0,
+      if (!sendto(recvfd, compressedPixels, compressedLength, 0,
 		  (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in))) {
 	perror("sendto");
       }
