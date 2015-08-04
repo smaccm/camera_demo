@@ -57,13 +57,19 @@ int SmaccmInterpreter::connect(int port){
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
+#define ATTACK_FRAMES = 5;
+
 void SmaccmInterpreter::compressFrame(){
   // Corrupt the stream if under attack
   static char corrupted[sentWidth*sentHeight] = {0};
   static int pixelsToCorrupt = 0;
+  static int attackFrame = 0;
 
   FILE *fp = fopen("attack.rgb", "rb");
   if (fp != NULL) {
+    fseek(fp, 3 * sentWidth * sentHeight * attackFrame);
+    attackFrame = (attackFrame + 1) % ATTACK_FRAMES;
+      
     if (pixelsToCorrupt < 10000) {
       pixelsToCorrupt += 100;
     }
