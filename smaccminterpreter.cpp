@@ -1,7 +1,7 @@
 #include "smaccminterpreter.hpp"
 
 #define PACKET_SIZE 65000
-#define VCHAN 0
+#define VCHAN 1
 
 SmaccmInterpreter::SmaccmInterpreter() : 
   m_blobs() {
