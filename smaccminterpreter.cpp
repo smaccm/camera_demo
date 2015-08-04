@@ -11,41 +11,40 @@ int SmaccmInterpreter::connect(){
 }
 
 int SmaccmInterpreter::connect(int port){
-
-	if ((recvfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		perror("cannot create socket\n");
-		exit(0);
-	}
-
-    //initiate vchan
-	//    vchan_init();
-
-	/* bind the socket to any valid IP address and a specific port */
-
-	memset((char *)&myaddr, 0, sizeof(myaddr));
-	myaddr.sin_family = AF_INET;
-	myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	myaddr.sin_port = htons(port);
-
-	if (bind(recvfd, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) {
-		perror("bind failed");
-		return 0;
-	}
-
-	if ((sendfd=socket(AF_INET, SOCK_DGRAM, 0))==-1)
-      printf("response socket created\n");
-
-
-    int trysize, gotsize, err;
-    socklen_t len = sizeof(int);
-    trysize = 1048576+32768;
-    do {
-       trysize -= 32768;
-       setsockopt(sendfd,SOL_SOCKET,SO_SNDBUF,(char*)&trysize,len);
-       err = getsockopt(sendfd,SOL_SOCKET,SO_SNDBUF,(char*)&gotsize,&len);
-       if (err < 0) { perror("getsockopt"); break; }
-    } while (gotsize < trysize);
-    printf("Size of output socket set to %d\n",gotsize);
+  if ((recvfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    perror("cannot create socket\n");
+    exit(0);
+  }
+  
+  //initiate vchan
+  //    vchan_init();
+  
+  /* bind the socket to any valid IP address and a specific port */
+  
+  memset((char *)&myaddr, 0, sizeof(myaddr));
+  myaddr.sin_family = AF_INET;
+  myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  myaddr.sin_port = htons(port);
+  
+  if (bind(recvfd, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) {
+    perror("bind failed");
+    return 0;
+  }
+  
+  if ((sendfd=socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+    printf("response socket created\n");
+  }
+  
+  int trysize, gotsize, err;
+  socklen_t len = sizeof(int);
+  trysize = 1048576+32768;
+  do {
+    trysize -= 32768;
+    setsockopt(sendfd,SOL_SOCKET,SO_SNDBUF,(char*)&trysize,len);
+    err = getsockopt(sendfd,SOL_SOCKET,SO_SNDBUF,(char*)&gotsize,&len);
+    if (err < 0) { perror("getsockopt"); break; }
+  } while (gotsize < trysize);
+  printf("Size of output socket set to %d\n",gotsize);
 
 
   printf("waiting for client connection...\n");
@@ -59,22 +58,25 @@ int SmaccmInterpreter::connect(int port){
 }
 
 void SmaccmInterpreter::compressFrame(){
-  //offset for current packet and number of packets
-  compressedLength = sentWidth*sentHeight*3;
-
   // Corrupt the stream if under attack
-  static char corrupt[sentWidth*sentHeight] = {0};
+  static char corrupted[sentWidth*sentHeight] = {0};
+  static int pixelsToCorrupt = 0;
+
   FILE *fp = fopen("attack.rgb", "rb");
   if (fp != NULL) {
-    for (int i = 0; i < 3000; i++) {
-      corrupt[rand() % (sentWidth * sentHeight)] = 1;
+    if (pixelsToCorrupt < 10000) {
+      pixelsToCorrupt += 100;
+    }
+
+    for (int i = 0; i < pixelsToCorrupt; i++) {
+      corrupted[rand() % (sentWidth * sentHeight)] = 1;
     }
 
     for (int i = 0; i < sentWidth*sentHeight; i++) {
       int r = fgetc(fp);
       int g = fgetc(fp);
       int b = fgetc(fp);
-      if (corrupt[i]) {
+      if (corrupted[i]) {
 	processedPixels[3*i + 1] = r;
 	processedPixels[3*i + 2] = g;
 	processedPixels[3*i + 3] = b;
@@ -83,80 +85,53 @@ void SmaccmInterpreter::compressFrame(){
     fclose(fp);
   }
 
-  compress(compressedPixels+2, &compressedLength, processedPixels, compressedLength);
+  FILE *ofp = fopen("image.ppm", "wb");
+  fprintf(ofp, "P6 %d %d 255\n", sentWidth, sentHeight);
+  for (int i = 0; i < sentWidth * sentHeight; i++) {
+    int r = processedPixels[3*i + 1];
+    int g = processedPixels[3*i + 2];
+    int b = processedPixels[3*i + 3];
+    fprintf(ofp, "%c%c%c", r, g, b);
+  }
+  fclose(ofp);
+
+  if (system("convert image.ppm image.jpg") != 0) {
+    printf("Please install imagemagick\n");
+    exit(-1);
+  }
+
+  remove("image.ppm");
 }
 
-void SmaccmInterpreter::sendFrame(){
+void SmaccmInterpreter::sendFrame() {
   boost::system::error_code ignored_error;
   int fFrameSent = 0;
-  for(;;){
-    //usleep(30000);
-    if(fNewFrame){
+  for(;;) {
+    if(fNewFrame) {
       imageMutex.lock();
       renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
       compressFrame();
-      int curpacket;
-      int curindex;
-      int packetSize = PACKET_SIZE;
-      int diff;
-      int messageSize;
-      int numpackets = compressedLength/packetSize + 1; //sentHeight;
       
-      for(curpacket = 0, curindex = 0;  curpacket < numpackets; curpacket++, curindex += packetSize){
-        compressedPixels[curindex] = curpacket+1; //hack to keep track of message ids 
-        compressedPixels[curindex+1] = numpackets; //hack to keep track of message ids 
-
-        diff = compressedLength - curpacket*packetSize;
-        if(diff < packetSize){
-          messageSize = diff + 2;
-        }else{
-          messageSize = packetSize + 2;
-        }
-    
-        //printf("sending packet %d of %d message size of %d\n", curpacket, numpackets, messageSize);
-
-	    if (sendto(recvfd, compressedPixels+curindex, messageSize, 0, 
-            (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in))){
-        }else{
-          printf("send error\n");
-	      perror("sendto");
-        }
-        //if(numpackets % 10 == 0){
-        //    usleep(5000);
-        //}
+      uint8_t buf[PACKET_SIZE];
+      FILE *fp = fopen("image.jpg", "rb");
+      int len = fread(buf, sizeof(uint8_t), PACKET_SIZE, fp);
+      fclose(fp);
+      remove("image.jpg");
+      
+      if (!sendto(recvfd, buf, len, 0,
+		  (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in))) {
+	perror("sendto");
       }
+      
       fNewFrame = 0;
       fFrameSent = 1;
       imageMutex.unlock();
     }
     usleep(10000);
-    //if(fFrameSent){
-    //  waitForResponse();
-    //}else{
-    //  usleep(30000);
-    //}
   }
 }
 
 void SmaccmInterpreter::waitForResponse(){
-//  boost::array<char, 1> buf;
-//  boost::system::error_code error;
-//  size_t len = 0;
-
-//  len = socket.read_some(boost::asio::buffer(buf), error);
-//  if (error == boost::asio::error::eof){
-//    printf("Client disconnected. Waiting for reconnect...\n");
-//    socket.close();
-//    acceptor.accept(socket);
-//    printf("Client reconnected!\n");
-//    socket.set_option(tcp::no_delay(false));  
-//  }else if (error){
-//    printf("An error occurred. Waiting for client to reconnect...\n");
-//    socket.close();
-//    acceptor.accept(socket);
-//    printf("Client reconnected!\n");
-//    socket.set_option(tcp::no_delay(false));
-//  }
 }
 
 void SmaccmInterpreter::interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b)
