@@ -57,7 +57,7 @@ int SmaccmInterpreter::connect(int port){
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
-#define ATTACK_FRAMES = 5;
+#define ATTACK_FRAMES 3
 
 void SmaccmInterpreter::compressFrame(){
   const int JPEG_QUALITY = 75; 
@@ -92,6 +92,59 @@ void SmaccmInterpreter::compressFrame(){
   int i;
   for(i = 0; i < _jpegSize; i++){
     compressedPixels[i] = _compressedImage[i];
+  //// Corrupt the stream if under attack
+  //static char corrupted[sentWidth*sentHeight] = {0};
+  //static int pixelsToCorrupt = 0;
+  //static int attackFrame = 0;
+  //static int attackFrameDir = 1;
+
+  //FILE *fp = fopen("attack.rgb", "rb");
+  //if (fp != NULL) {
+  //  fseek(fp, 3 * sentWidth * sentHeight * attackFrame, 0);
+
+  //  attackFrame = attackFrame + attackFrameDir;
+  //  if (attackFrame == ATTACK_FRAMES) {
+  //    attackFrame = ATTACK_FRAMES - 1;
+  //    attackFrameDir = -1;
+  //  } else if (attackFrame == -1) {
+  //    attackFrame = 0;
+  //    attackFrameDir = 1;
+  //  }
+  //    
+  //  if (pixelsToCorrupt < 10000) {
+  //    pixelsToCorrupt += 200;
+  //  }
+
+  //  for (int i = 0; i < pixelsToCorrupt; i++) {
+  //    corrupted[rand() % (sentWidth * sentHeight)] = 1;
+  //  }
+
+  //  for (int i = 0; i < sentWidth*sentHeight; i++) {
+  //    int r = fgetc(fp);
+  //    int g = fgetc(fp);
+  //    int b = fgetc(fp);
+  //    if (corrupted[i]) {
+  //  processedPixels[3*i + 1] = r;
+  //  processedPixels[3*i + 2] = g;
+  //  processedPixels[3*i + 3] = b;
+  //    }
+  //  }
+  //  fclose(fp);
+  //}
+
+  //FILE *ofp = fopen("image.ppm", "wb");
+  //fprintf(ofp, "P6 %d %d 255\n", sentWidth, sentHeight);
+  //for (int i = 0; i < sentWidth * sentHeight; i++) {
+  //  int r = processedPixels[3*i + 1];
+  //  int g = processedPixels[3*i + 2];
+  //  int b = processedPixels[3*i + 3];
+  //  fprintf(ofp, "%c%c%c", r, g, b);
+  //}
+  //fclose(ofp);
+
+  //if (system("convert image.ppm image.jpg") != 0) {
+  //  printf("Please install imagemagick\n");
+  //  exit(-1);
   }
   compressedLength = _jpegSize;
   tjFree(_compressedImage);
