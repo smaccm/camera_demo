@@ -20,7 +20,6 @@ int SmaccmInterpreter::connect(int port){
   //    vchan_init();
   
   /* bind the socket to any valid IP address and a specific port */
-  
   memset((char *)&myaddr, 0, sizeof(myaddr));
   myaddr.sin_family = AF_INET;
   myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -57,149 +56,22 @@ int SmaccmInterpreter::connect(int port){
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
-#define ATTACK_FRAMES 3
-
 void SmaccmInterpreter::compressFrame(){
-  const int JPEG_QUALITY = 75; 
+  const int JPEG_QUALITY = 75;
   const int COLOR_COMPONENTS = 3;
-  int _width = 320;
-  int _height = 200;
-  long unsigned int _jpegSize = 0;
-  int uncompressedLength = _width*_height*COLOR_COMPONENTS;
-  unsigned char* _compressedImage = 0; //!< Memory is allocated by tjCompress2 if _jpegSize == 0
-  //unsigned char buffer[uncompressedLength]; //!< Contains the uncompressed image
-  //FILE * fp = fopen("skull.rgb", "r");
+  long unsigned int jpegSize = 0;
+  unsigned char* compressedImage = 0;
 
-  //size_t readByes = fread(&buffer, sizeof(unsigned char), uncompressedLength, fp); 
-  //fclose(fp);
-  tjhandle _jpegCompressor = tjInitCompress();
-  compressedLength = 1;
-  tjCompress2(_jpegCompressor, processedPixels, _width, 0, _height, TJPF_RGB,
-            &_compressedImage, &_jpegSize, TJSAMP_444, JPEG_QUALITY,
+  tjhandle jpegCompressor = tjInitCompress();
+  tjCompress2(jpegCompressor, processedPixels + 1, WIDTH, 0, HEIGHT, TJPF_RGB,
+            &compressedImage, &jpegSize, TJSAMP_444, JPEG_QUALITY,
             TJFLAG_FASTDCT);
-
-  //tjCompress2(_jpegCompressor, buffer, _width, 0, _height, TJPF_RGB,
-  //          &_compressedImage, &_jpegSize, TJSAMP_444, JPEG_QUALITY,
-  //          TJFLAG_FASTDCT);
-
-  //FILE *fpout = fopen("skull.jpeg", "w");
-  //fwrite(_compressedImage, sizeof(unsigned char), _jpegSize, fpout);
-  //fclose(fpout);
-  tjDestroy(_jpegCompressor);
+  tjDestroy(jpegCompressor);
   
-  //to free the memory allocated by TurboJPEG (either by tjAlloc(), 
-  //or by the Compress/Decompress) after you are done working on it:
-  int i;
-  for(i = 0; i < _jpegSize; i++){
-    compressedPixels[i] = _compressedImage[i];
-  //// Corrupt the stream if under attack
-  //static char corrupted[sentWidth*sentHeight] = {0};
-  //static int pixelsToCorrupt = 0;
-  //static int attackFrame = 0;
-  //static int attackFrameDir = 1;
-
-  //FILE *fp = fopen("attack.rgb", "rb");
-  //if (fp != NULL) {
-  //  fseek(fp, 3 * sentWidth * sentHeight * attackFrame, 0);
-
-  //  attackFrame = attackFrame + attackFrameDir;
-  //  if (attackFrame == ATTACK_FRAMES) {
-  //    attackFrame = ATTACK_FRAMES - 1;
-  //    attackFrameDir = -1;
-  //  } else if (attackFrame == -1) {
-  //    attackFrame = 0;
-  //    attackFrameDir = 1;
-  //  }
-  //    
-  //  if (pixelsToCorrupt < 10000) {
-  //    pixelsToCorrupt += 200;
-  //  }
-
-  //  for (int i = 0; i < pixelsToCorrupt; i++) {
-  //    corrupted[rand() % (sentWidth * sentHeight)] = 1;
-  //  }
-
-  //  for (int i = 0; i < sentWidth*sentHeight; i++) {
-  //    int r = fgetc(fp);
-  //    int g = fgetc(fp);
-  //    int b = fgetc(fp);
-  //    if (corrupted[i]) {
-  //  processedPixels[3*i + 1] = r;
-  //  processedPixels[3*i + 2] = g;
-  //  processedPixels[3*i + 3] = b;
-  //    }
-  //  }
-  //  fclose(fp);
-  //}
-
-  //FILE *ofp = fopen("image.ppm", "wb");
-  //fprintf(ofp, "P6 %d %d 255\n", sentWidth, sentHeight);
-  //for (int i = 0; i < sentWidth * sentHeight; i++) {
-  //  int r = processedPixels[3*i + 1];
-  //  int g = processedPixels[3*i + 2];
-  //  int b = processedPixels[3*i + 3];
-  //  fprintf(ofp, "%c%c%c", r, g, b);
-  //}
-  //fclose(ofp);
-
-  //if (system("convert image.ppm image.jpg") != 0) {
-  //  printf("Please install imagemagick\n");
-  //  exit(-1);
-  }
-  compressedLength = _jpegSize;
-  tjFree(_compressedImage);
-
+  memcpy(compressedPixels, compressedImage, jpegSize);
+  compressedLength = jpegSize;
+  tjFree(compressedImage);
 }
-
-//void SmaccmInterpreter::compressFrame(){
-//  // Corrupt the stream if under attack
-//  static char corrupted[sentWidth*sentHeight] = {0};
-//  static int pixelsToCorrupt = 0;
-//  static int attackFrame = 0;
-//
-//  FILE *fp = fopen("attack.rgb", "rb");
-//  if (fp != NULL) {
-//    fseek(fp, 3 * sentWidth * sentHeight * attackFrame);
-//    attackFrame = (attackFrame + 1) % ATTACK_FRAMES;
-//      
-//    if (pixelsToCorrupt < 10000) {
-//      pixelsToCorrupt += 100;
-//    }
-//
-//    for (int i = 0; i < pixelsToCorrupt; i++) {
-//      corrupted[rand() % (sentWidth * sentHeight)] = 1;
-//    }
-//
-//    for (int i = 0; i < sentWidth*sentHeight; i++) {
-//      int r = fgetc(fp);
-//      int g = fgetc(fp);
-//      int b = fgetc(fp);
-//      if (corrupted[i]) {
-//	processedPixels[3*i + 1] = r;
-//	processedPixels[3*i + 2] = g;
-//	processedPixels[3*i + 3] = b;
-//      }
-//    }
-//    fclose(fp);
-//  }
-//
-//  FILE *ofp = fopen("image.ppm", "wb");
-//  fprintf(ofp, "P6 %d %d 255\n", sentWidth, sentHeight);
-//  for (int i = 0; i < sentWidth * sentHeight; i++) {
-//    int r = processedPixels[3*i + 1];
-//    int g = processedPixels[3*i + 2];
-//    int b = processedPixels[3*i + 3];
-//    fprintf(ofp, "%c%c%c", r, g, b);
-//  }
-//  fclose(ofp);
-//
-//  if (system("convert image.ppm image.jpg") != 0) {
-//    printf("Please install imagemagick\n");
-//    exit(-1);
-//  }
-//
-//  remove("image.ppm");
-//}
 
 void SmaccmInterpreter::sendFrame() {
   boost::system::error_code ignored_error;
@@ -207,14 +79,9 @@ void SmaccmInterpreter::sendFrame() {
   for(;;) {
     if(fNewFrame) {
       imageMutex.lock();
-      renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame); 
+      renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame);
+      corruptFrame();
       compressFrame();
-      
-      //uint8_t buf[PACKET_SIZE];
-      //FILE *fp = fopen("image.jpg", "rb");
-      //int len = fread(buf, sizeof(uint8_t), PACKET_SIZE, fp);
-      //fclose(fp);
-      //remove("image.jpg");
       
       if (!sendto(recvfd, compressedPixels, compressedLength, 0,
 		  (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in))) {
@@ -229,7 +96,48 @@ void SmaccmInterpreter::sendFrame() {
   }
 }
 
-void SmaccmInterpreter::waitForResponse(){
+#define ATTACK_FRAMES 3
+
+void SmaccmInterpreter::corruptFrame(){
+  // Corrupt the stream if under attack
+  static char corrupted[WIDTH*HEIGHT] = {0};
+  static int pixelsToCorrupt = 0;
+  static int attackFrame = 0;
+  static int attackFrameDir = 1;
+
+  FILE *fp = fopen("attack.rgb", "rb");
+  if (fp != NULL) {
+    fseek(fp, 3 * WIDTH * HEIGHT * attackFrame, 0);
+
+    attackFrame = attackFrame + attackFrameDir;
+    if (attackFrame == ATTACK_FRAMES) {
+      attackFrame = ATTACK_FRAMES - 1;
+      attackFrameDir = -1;
+    } else if (attackFrame == -1) {
+      attackFrame = 0;
+      attackFrameDir = 1;
+    }
+      
+    if (pixelsToCorrupt < 10000) {
+      pixelsToCorrupt += 200;
+    }
+
+    for (int i = 0; i < pixelsToCorrupt; i++) {
+      corrupted[rand() % (WIDTH * HEIGHT)] = 1;
+    }
+
+    for (int i = 0; i < WIDTH*HEIGHT; i++) {
+      int r = fgetc(fp);
+      int g = fgetc(fp);
+      int b = fgetc(fp);
+      if (corrupted[i]) {
+	processedPixels[3*i + 1] = r;
+	processedPixels[3*i + 2] = g;
+	processedPixels[3*i + 3] = b;
+      }
+    }
+    fclose(fp);
+  }
 }
 
 void SmaccmInterpreter::interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b)
@@ -419,10 +327,10 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
               height = *(uint16_t *)chirp_data[5];
               frame_len = *(uint32_t *)chirp_data[6];
               pFrame = (uint8_t *)chirp_data[7];
-			  assert(width == sentWidth);
-			  assert(height == sentHeight);
-			  assert(frame_len = width*height);
-
+	      assert(width == WIDTH);
+	      assert(height == HEIGHT);
+	      assert(frame_len = width*height);
+	      
               fNewFrame = 1;
  //             printf("cmodelsLen: %d, cmodels :%f \n", cmodelsLen, *cmodels);
               imageMutex.unlock();

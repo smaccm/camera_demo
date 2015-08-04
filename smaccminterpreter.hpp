@@ -19,6 +19,8 @@
 #define __SMACCMINTERPRETER_HPP__
 
 #define SERVICE_PORT 4000
+#define WIDTH 320
+#define HEIGHT 200
 using boost::asio::ip::tcp;
 
 class SmaccmInterpreter : public PixyInterpreter
@@ -38,11 +40,9 @@ class SmaccmInterpreter : public PixyInterpreter
     int sendfd; //send file descritptor
 
     //image stuff
-    static const int sentWidth = 320;
-    static const int sentHeight = 200;
     //r,g,b, each take a byte
-    uint8_t processedPixels[sentWidth*sentHeight*3];//extra byte is a hack to keep track of udp message number
-    uint8_t compressedPixels[sentWidth*sentHeight*3];
+    uint8_t processedPixels[WIDTH*HEIGHT*3];
+    uint8_t compressedPixels[WIDTH*HEIGHT*3];
     unsigned long compressedLength;
  
     //used for calculating blobs
@@ -70,7 +70,7 @@ class SmaccmInterpreter : public PixyInterpreter
 
     void sendFrame(void);
     void compressFrame(void);
-    void waitForResponse(void);
+    void corruptFrame(void);
 };
 
 #endif
