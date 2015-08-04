@@ -1,7 +1,7 @@
 #include "smaccminterpreter.hpp"
 
 #define PACKET_SIZE 65000
-#define VCHAN 1
+#define VCHAN 0
 
 SmaccmInterpreter::SmaccmInterpreter() : 
   m_blobs() {
@@ -83,6 +83,8 @@ void SmaccmInterpreter::sendFrame() {
   }
 }
 
+#define STEPS_PER_FRAME 5
+
 void SmaccmInterpreter::corruptFrame(){
   // Corrupt the stream if under attack
   static char corrupted[WIDTH*HEIGHT] = {0};
@@ -90,20 +92,25 @@ void SmaccmInterpreter::corruptFrame(){
   static int attackFrame = 0;
   static int numAttackFrames;
   static uint8_t *vaddr = NULL;
+  static int step = 0;
 
   if (vaddr == NULL) {
     FILE *fp = fopen("attack.rgb", "rb");
     if (fp != NULL) {
       struct stat statbuf;
-      fstate(fp, &statbuf);
-      vaddr = mmap(NULL, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
+      fstat(fileno(fp), &statbuf);
+      vaddr = (uint8_t *) mmap(NULL, statbuf.st_size, PROT_READ, MAP_SHARED, fileno(fp), 0);
       numAttackFrames = statbuf.st_size / (3 * WIDTH * HEIGHT);
     }
   }
 
   if (vaddr != NULL) {
-    int frameOffset = 3 * WIDTH * HEIGHT * attackFrame;
-    attackFrame = (attackFrame + 1) % numAttackFrames;
+    uint8_t *frameBase = vaddr + 3 * WIDTH * HEIGHT * attackFrame;
+
+    step = (step + 1) % STEPS_PER_FRAME;
+    if (step == 0) {
+      attackFrame = (attackFrame + 1) % numAttackFrames;
+    }
 
     if (pixelsToCorrupt < 10000) {
       pixelsToCorrupt += 200;
@@ -115,7 +122,7 @@ void SmaccmInterpreter::corruptFrame(){
 
     for (int i = 0; i < WIDTH*HEIGHT; i++) {
       if (corrupted[i]) {
-        memcpy(processedPixels, vaddr + frameOffset + 3*i, 3);
+        memcpy(processedPixels + 3*i, frameBase + 3*i, 3);
       }
     }
   }
