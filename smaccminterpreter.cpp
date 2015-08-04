@@ -1,6 +1,7 @@
 #include "smaccminterpreter.hpp"
 
 #define PACKET_SIZE 65000
+#define VCHAN 1
 
 SmaccmInterpreter::SmaccmInterpreter() : 
   m_blobs() {
@@ -17,7 +18,9 @@ int SmaccmInterpreter::connect(int port){
   }
   
   // initiate vchan
-  vchan_init();
+  if (VCHAN) {
+    vchan_init();
+  }
   
   // bind the socket to any valid IP address and a specific port
   memset((char *)&myaddr, 0, sizeof(myaddr));
@@ -226,7 +229,7 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
     }
   }
 
-  if(largestPerim != 0){
+  if(largestPerim != 0 && VCHAN){
     send_blob(ll, rr, tt, bb);
   }
   return 0;
