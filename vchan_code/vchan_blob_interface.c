@@ -31,9 +31,9 @@ int send_blob(int l, int r, int t, int b) {
     int data[4];
     char ack;
     
-    printf("vchan: packet start\n");
+    //printf("vchan: packet start\n");
     sz = libvchan_data_ready(con);
-    printf("vchan: send packet\n");
+    //printf("vchan: send packet\n");
 
    // int xmid = ((r + l) / 2) - 160;
    // int ymid = ((b + t) / 2) - 100;
@@ -49,15 +49,18 @@ int send_blob(int l, int r, int t, int b) {
 
     while(libvchan_buffer_space(con) < 4*sizeof(int));
     sz = libvchan_send(con, data, 4*sizeof(int));
+    static int count = 0;
+    printf("Sent bounding box %d\n", ++count);
+
     if(sz < 4*sizeof(int)) {
     	printf("--BAD PACKET -- SEND\n");
     	return -1;
     }
 
-    printf("vchan: waiting for ack..\n");
+    //printf("vchan: waiting for ack..\n");
     libvchan_wait(con);
     libvchan_read(con, &ack, sizeof(char));
-    printf("vchan: received ack\n");
+    //printf("vchan: received ack\n");
 
     return 0;
 }
