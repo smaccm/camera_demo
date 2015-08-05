@@ -6,5 +6,6 @@ demo
 vchan_test
 SmaccmViewer/bin/*
 attack.rgb
+attack-load.rgb
 *.ppm
 *.jpg

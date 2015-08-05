@@ -4,6 +4,8 @@
 # program. Otherwise, the program may do a partial read during the
 # copy.
 
-cp skull.rgb attack-load.rgb
+set -e
+IMAGE=${1:-skull}
+cp images/$IMAGE.rgb attack-load.rgb
 mv attack-load.rgb attack.rgb
 
