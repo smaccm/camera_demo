@@ -32,6 +32,6 @@ Client: run `java -jar SmaccmViewer.jar [port]`. The default port is
 Attacking
 =========
 
-Run `attack.sh` from the server side to run the attack demo.
+Run `attack.py` from the server side to run the attack demo.
 
 Run `java -jar SmaccmViewer.jar 5000` to see intercepted video.
