@@ -23,16 +23,11 @@ Run `make`.
 Running
 =======
 
-Run `demo` to start the server. The default port is 4000 and can be
+Server: run `demo` to start the server. The default port is 4000 and can be
 set using the first command line argument.
 
-To connect, run `java -jar SmaccmViewer.jar <hostname> [port]`. The
-default port is 4000.
-
-The server must be started before the client connects. The server only
-services the first client. To reconnect the client, the server must be
-restarted.
-
+Client: run `java -jar SmaccmViewer.jar [port]`. The default port is
+4000 and can be set using the first command line argument.
 
 Attacking
 =========

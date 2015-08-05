@@ -7,9 +7,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.util.Arrays;
 
 import javax.imageio.ImageIO;
@@ -23,37 +23,25 @@ public class SmaccmViewer extends Thread {
 	public static final int PACKET_SIZE = 65000;
 
 	public static void main(String[] args) {
-		if (args.length < 1) {
-			System.out.println("Usage: java SmaccmViewer.jar [hostname|ip address] <port>");
-			System.exit(0);
-		}
-
-		String serverName = args[0];
 		int port = 4000;
-		if (args.length == 2) {
-			port = Integer.valueOf(args[1]);
+		if (args.length == 1) {
+			port = Integer.valueOf(args[0]);
 		}
 
-		new SmaccmViewer(serverName, port).run();
+		new SmaccmViewer(port).run();
 	}
 
-	public SmaccmViewer(String serverName, int port) {
-		this.serverName = serverName;
+	public SmaccmViewer(int port) {
 		this.port = port;
 		createUI();
 	}
 
-	private final String serverName;
 	private final int port;
 	private volatile Image image;
 
 	@Override
 	public void run() {
-		try (DatagramSocket socket = new DatagramSocket()) {
-			InetAddress IPAddress = InetAddress.getByName(serverName);
-			DatagramPacket helloPacket = new DatagramPacket(new byte[] { 0 }, 1, IPAddress, port);
-			socket.send(helloPacket);
-
+		try (DatagramSocket socket = new DatagramSocket(port)) {
 			byte[] packet = new byte[PACKET_SIZE];
 			DatagramPacket datagramPacket = new DatagramPacket(packet, packet.length);
 
@@ -78,6 +66,9 @@ public class SmaccmViewer extends Thread {
 					e.printStackTrace();
 				}
 			}
+		} catch (BindException e) {
+			e.printStackTrace();
+			System.exit(-1);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
