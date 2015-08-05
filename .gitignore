@@ -1,11 +1,6 @@
 *.o
 *.swp
-*.bmp
 tags
 demo
 vchan_test
 SmaccmViewer/bin/*
-attack.rgb
-attack-load.rgb
-*.ppm
-*.jpg
