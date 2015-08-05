@@ -10,7 +10,11 @@ Build Instructions
 Install dependencies:
 
 ```
-apt-get install libboost-chrono-dev libboost-system-dev libboost-thread-dev libusb-1.0-0-dev libjpeg-turbo8-dev
+apt-get install libboost-chrono-dev \
+                libboost-system-dev \
+                libboost-thread-dev \
+                libusb-1.0-0-dev \
+                libjpeg-turbo8-dev
 ```
 
 Run `make`.
