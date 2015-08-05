@@ -30,14 +30,8 @@ class SmaccmInterpreter : public PixyInterpreter
     int connect();
     int connect(int port);
   private:
-    //socket stuff
-    //boost::asio::io_service io_service;
-    //tcp::acceptor acceptor;
-    //tcp::socket socket;
-    struct sockaddr_in myaddr; //our address
-    struct sockaddr_in remaddr; //remote address
-    int recvfd; //receive file descriptor
-    int sendfd; //send file descritptor
+    struct sockaddr_in broadcastAddr;
+    int socketfd;
 
     //image stuff
     //r,g,b, each take a byte

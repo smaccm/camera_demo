@@ -12,8 +12,15 @@ int SmaccmInterpreter::connect(){
 }
 
 int SmaccmInterpreter::connect(int port){
-  if ((recvfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+  if ((socketfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     perror("cannot create socket\n");
+    exit(0);
+  }
+
+  int broadcastPermission = 1;
+  if (setsockopt(socketfd, SOL_SOCKET, SO_BROADCAST, (void *) &broadcastPermission,
+		 sizeof(broadcastPermission)) < 0) {
+    perror("setsockopt() failed");
     exit(0);
   }
   
@@ -22,22 +29,10 @@ int SmaccmInterpreter::connect(int port){
     vchan_init();
   }
   
-  // bind the socket to any valid IP address and a specific port
-  memset((char *)&myaddr, 0, sizeof(myaddr));
-  myaddr.sin_family = AF_INET;
-  myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  myaddr.sin_port = htons(port);
-  
-  if (bind(recvfd, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) {
-    perror("bind failed");
-    return 0;
-  }
-  
-  printf("waiting for client connection...\n");
-  char val;
-  socklen_t addrlen = sizeof(remaddr);
-  int recvlen = recvfrom(recvfd, &val, 1, 0, (struct sockaddr *)&remaddr, &addrlen);
-  printf("Client connected at address %s, port %d\n", inet_ntoa(remaddr.sin_addr), ntohs(remaddr.sin_port));
+  broadcastAddr.sin_family = AF_INET;
+  inet_pton(AF_INET, "255.255.255.255", &(broadcastAddr.sin_addr));
+  broadcastAddr.sin_port = htons(port);
+  printf("Broadcasting to %s, port %d\n", inet_ntoa(broadcastAddr.sin_addr), ntohs(broadcastAddr.sin_port));
   fNewFrame = 1;
   remove("attack.rgb");
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
@@ -70,8 +65,8 @@ void SmaccmInterpreter::sendFrame() {
       corruptFrame();
       compressFrame();
       
-      if (!sendto(recvfd, compressedPixels, compressedLength, 0,
-		  (struct sockaddr *)&remaddr, sizeof(struct sockaddr_in))) {
+      if (!sendto(socketfd, compressedPixels, compressedLength, 0,
+		  (struct sockaddr *)&broadcastAddr, sizeof(struct sockaddr_in))) {
 	perror("sendto");
       }
       
@@ -87,12 +82,11 @@ void SmaccmInterpreter::sendFrame() {
 
 void SmaccmInterpreter::corruptFrame(){
   // Corrupt the stream if under attack
-  static char corrupted[WIDTH*HEIGHT] = {0};
-  static int pixelsToCorrupt = 0;
   static int attackFrame = 0;
   static int numAttackFrames;
   static uint8_t *vaddr = NULL;
   static int step = 0;
+  static int percentCorrupt = 0;
 
   if (vaddr == NULL) {
     FILE *fp = fopen("attack.rgb", "rb");
@@ -113,18 +107,12 @@ void SmaccmInterpreter::corruptFrame(){
       attackFrame = (attackFrame + 1) % numAttackFrames;
     }
 
-    if (pixelsToCorrupt < 10000) {
-      pixelsToCorrupt += 150;
+    if (percentCorrupt < 100) {
+      percentCorrupt++;
     }
 
-    for (int i = 0; i < pixelsToCorrupt; i++) {
-      corrupted[rand() % (WIDTH * HEIGHT)] = 1;
-    }
-
-    for (int i = 0; i < WIDTH*HEIGHT; i++) {
-      if (corrupted[i]) {
-        memcpy(processedPixels + 3*i, frameBase + 3*i, 3);
-      }
+    if (rand() % 100 < percentCorrupt) {
+      memcpy(processedPixels, frameBase, 3 * WIDTH * HEIGHT);
     }
   }
 }
