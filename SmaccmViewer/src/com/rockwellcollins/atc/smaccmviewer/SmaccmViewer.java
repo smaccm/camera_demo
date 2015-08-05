@@ -45,23 +45,13 @@ public class SmaccmViewer extends Thread {
 			byte[] packet = new byte[PACKET_SIZE];
 			DatagramPacket datagramPacket = new DatagramPacket(packet, packet.length);
 
-			int numFrames = 0;
-			long start = System.currentTimeMillis();
 			while (true) {
 				try {
 					socket.receive(datagramPacket);
 					int len = datagramPacket.getLength();
 					byte[] buf = Arrays.copyOf(packet, len);
 					image = ImageIO.read(new ByteArrayInputStream(buf));
-
-					numFrames++;
-					if (numFrames == 100) {
-						long stop = System.currentTimeMillis();
-						double seconds = (stop - start) / 1000.0;
-						System.out.printf("FPS: %.1f\n", numFrames / seconds);
-						numFrames = 0;
-						start = stop;
-					}
+					displayFps();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -71,6 +61,20 @@ public class SmaccmViewer extends Thread {
 			System.exit(-1);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	int numFrames = 0;
+	long start = System.currentTimeMillis();
+
+	private void displayFps() {
+		numFrames++;
+		long stop = System.currentTimeMillis();
+		double seconds = (stop - start) / 1000.0;
+		if (seconds > 1) {
+			System.out.printf("FPS: %.1f\n", numFrames / seconds);
+			numFrames = 0;
+			start = stop;
 		}
 	}
 
