@@ -18,7 +18,6 @@
 #ifndef __SMACCMINTERPRETER_HPP__
 #define __SMACCMINTERPRETER_HPP__
 
-#define SERVICE_PORT 4000
 #define WIDTH 320
 #define HEIGHT 200
 using boost::asio::ip::tcp;
@@ -27,8 +26,8 @@ class SmaccmInterpreter : public PixyInterpreter
 {
   public:
     SmaccmInterpreter();
-    int connect();
     int connect(int port);
+
   private:
     struct sockaddr_in broadcastAddr;
     int socketfd;
@@ -64,7 +63,6 @@ class SmaccmInterpreter : public PixyInterpreter
 
     void sendFrame(void);
     void compressFrame(void);
-    void corruptFrame(void);
 };
 
 #endif

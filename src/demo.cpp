@@ -28,10 +28,15 @@
 // Pixy Block buffer // 
 struct Block blocks[BLOCK_BUFFER_SIZE];
 
+int vchan = 1;
+
 void handle_SIGINT(int unused)
 {
   // On CTRL+C - abort! //
-  vchan_close();
+  printf("Caught SIGINT\n");
+  if (vchan) {
+    vchan_close();
+  }
   exit(0);
 }
 
@@ -55,12 +60,15 @@ int main(int argc, char * argv[])
   uint16_t width, height, sentWidth, sentHeight;
   uint32_t numPixels;
 
-  //wait for client connection
-  if(argc == 2){
-    interpreter.connect(atoi(argv[1]));
-  }else{
-    interpreter.connect();
+  int port = 4000;
+  if(argc >= 2) {
+    port = atoi(argv[1]);
   }
+  if(argc >= 3) {
+    vchan = atoi(argv[2]);
+  }
+  
+  interpreter.connect(port);
 
   // Connect to Pixy
   pixy_init_status = pixy_init();

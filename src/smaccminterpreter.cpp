@@ -1,14 +1,12 @@
 #include "smaccminterpreter.hpp"
 
 #define PACKET_SIZE 65000
-#define VCHAN 1
+
+// defined in demo.cpp
+extern int vchan;
 
 SmaccmInterpreter::SmaccmInterpreter() : 
   m_blobs() {
-}
-
-int SmaccmInterpreter::connect(){
-  connect(SERVICE_PORT);
 }
 
 int SmaccmInterpreter::connect(int port){
@@ -25,7 +23,7 @@ int SmaccmInterpreter::connect(int port){
   }
   
   // initiate vchan
-  if (VCHAN) {
+  if (vchan) {
     vchan_init();
   }
   
@@ -33,8 +31,6 @@ int SmaccmInterpreter::connect(int port){
   inet_pton(AF_INET, "255.255.255.255", &(broadcastAddr.sin_addr));
   broadcastAddr.sin_port = htons(port);
   printf("Broadcasting to %s, port %d\n", inet_ntoa(broadcastAddr.sin_addr), ntohs(broadcastAddr.sin_port));
-  fNewFrame = 1;
-  remove("attack.rgb");
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
@@ -62,7 +58,6 @@ void SmaccmInterpreter::sendFrame() {
     if(fNewFrame) {
       imageMutex.lock();
       renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame);
-      corruptFrame();
       compressFrame();
       
       if (!sendto(socketfd, compressedPixels, compressedLength, 0,
@@ -75,45 +70,6 @@ void SmaccmInterpreter::sendFrame() {
       imageMutex.unlock();
     }
     usleep(10000);
-  }
-}
-
-#define STEPS_PER_FRAME 3
-
-void SmaccmInterpreter::corruptFrame(){
-  // Corrupt the stream if under attack
-  static int attackFrame = 0;
-  static int numAttackFrames;
-  static uint8_t *vaddr = NULL;
-  static int step = 0;
-  static int percentCorrupt = 0;
-
-  if (vaddr == NULL) {
-    FILE *fp = fopen("attack.rgb", "rb");
-    if (fp != NULL) {
-      fseek(fp, 0, SEEK_END);
-      int size = ftell(fp);
-      vaddr = (uint8_t *) mmap(NULL, size, PROT_READ, MAP_SHARED, fileno(fp), 0);
-      numAttackFrames = size / (3 * WIDTH * HEIGHT);
-      fclose(fp);
-    }
-  }
-
-  if (vaddr != NULL) {
-    uint8_t *frameBase = vaddr + 3 * WIDTH * HEIGHT * attackFrame;
-
-    step = (step + 1) % STEPS_PER_FRAME;
-    if (step == 0) {
-      attackFrame = (attackFrame + 1) % numAttackFrames;
-    }
-
-    if (percentCorrupt < 100) {
-      percentCorrupt++;
-    }
-
-    if (rand() % 100 < percentCorrupt) {
-      memcpy(processedPixels, frameBase, 3 * WIDTH * HEIGHT);
-    }
   }
 }
 
@@ -225,7 +181,7 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
     }
   }
 
-  if(largestPerim != 0 && VCHAN){
+  if(largestPerim != 0 && vchan){
     send_blob(ll, rr, tt, bb);
   }
   return 0;
