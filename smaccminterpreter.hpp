@@ -1,6 +1,6 @@
 #include "pixyinterpreter.hpp"
 #include <boost/asio.hpp>
-#include  <boost/thread/thread.hpp>
+#include <boost/thread/thread.hpp>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/mman.h>
@@ -11,7 +11,6 @@
 #include <signal.h>
 #include <string.h>
 #include <iostream>
-#include <zlib.h>
 #include <turbojpeg.h>
 #include "blobstuff/processblobs.h"
 #include "vchan_code/vchan_blob_interface.h"
