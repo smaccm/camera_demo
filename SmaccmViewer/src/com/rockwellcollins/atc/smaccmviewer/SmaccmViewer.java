@@ -3,8 +3,6 @@ package com.rockwellcollins.atc.smaccmviewer;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.BindException;
@@ -15,7 +13,7 @@ import java.util.Arrays;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.Timer;
+import javax.swing.SwingUtilities;
 
 public class SmaccmViewer extends Thread {
 	public static final int IMG_WIDTH = 320;
@@ -38,6 +36,7 @@ public class SmaccmViewer extends Thread {
 
 	private final int port;
 	private volatile Image image;
+	private JPanel panel;
 
 	@Override
 	public void run() {
@@ -51,6 +50,7 @@ public class SmaccmViewer extends Thread {
 					int len = datagramPacket.getLength();
 					byte[] buf = Arrays.copyOf(packet, len);
 					image = ImageIO.read(new ByteArrayInputStream(buf));
+					refreshDisplay();
 					displayFps();
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -62,6 +62,15 @@ public class SmaccmViewer extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void refreshDisplay() {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				panel.repaint();
+			}
+		});
 	}
 
 	int numFrames = 0;
@@ -78,6 +87,7 @@ public class SmaccmViewer extends Thread {
 		}
 	}
 
+	@SuppressWarnings("serial")
 	private void createUI() {
 		final JFrame frame = new JFrame();
 		frame.setTitle("SmaccmCopter Video");
@@ -85,25 +95,16 @@ public class SmaccmViewer extends Thread {
 		frame.setVisible(true);
 		frame.setSize(IMG_WIDTH, IMG_HEIGHT);
 
-		@SuppressWarnings("serial")
-		final JPanel panel = new JPanel() {
+		panel = new JPanel() {
 			@Override
 			public void paintComponent(Graphics g) {
 				if (image != null) {
 					Dimension size = getSize();
-					g.drawImage(image, 0, 0, size.width, size.height, 1, 1, IMG_WIDTH - 2,
+					g.drawImage(image, 0, 0, size.width, size.height, 0, 0, IMG_WIDTH - 2,
 							IMG_HEIGHT - 2, null);
 				}
 			}
 		};
-
 		frame.getContentPane().add(panel);
-
-		new Timer(50, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				panel.repaint();
-			}
-		}).start();
 	}
 }

@@ -17,7 +17,7 @@ int SmaccmInterpreter::connect(char const *ip, int port){
 
   int broadcastPermission = 1;
   if (setsockopt(socketfd, SOL_SOCKET, SO_BROADCAST, (void *) &broadcastPermission,
-		 sizeof(broadcastPermission)) < 0) {
+                 sizeof(broadcastPermission)) < 0) {
     perror("setsockopt() failed");
     exit(0);
   }
@@ -61,8 +61,8 @@ void SmaccmInterpreter::sendFrame() {
       compressFrame();
       
       if (!sendto(socketfd, compressedPixels, compressedLength, 0,
-		  (struct sockaddr *)&clientAddr, sizeof(struct sockaddr_in))) {
-	perror("sendto");
+                  (struct sockaddr *)&clientAddr, sizeof(struct sockaddr_in))) {
+        perror("sendto");
       }
       
       fNewFrame = 0;
@@ -243,14 +243,14 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
               height = *(uint16_t *)chirp_data[5];
               frame_len = *(uint32_t *)chirp_data[6];
               pFrame = (uint8_t *)chirp_data[7];
-	      assert(width == WIDTH);
-	      assert(height == HEIGHT);
-	      assert(frame_len = width*height);
-	      
+              assert(width == WIDTH);
+              assert(height == HEIGHT);
+              assert(frame_len = width*height);
+              
               fNewFrame = 1;
               imageMutex.unlock();
             }else{
-	      //printf("didn't get lock\n");
+              //printf("didn't get lock\n");
             }
             break;
           default:
@@ -266,7 +266,7 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
       
       default:
         fprintf(stderr, "libpixy: Unknown message received from Pixy: [%u]\n", chirp_message);
-	break;
+        break;
     }
   } 
 }
