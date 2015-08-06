@@ -9,7 +9,7 @@ SmaccmInterpreter::SmaccmInterpreter() :
   m_blobs() {
 }
 
-int SmaccmInterpreter::connect(int port){
+int SmaccmInterpreter::connect(char const *ip, int port){
   if ((socketfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     perror("cannot create socket\n");
     exit(0);
@@ -27,10 +27,10 @@ int SmaccmInterpreter::connect(int port){
     vchan_init();
   }
   
-  broadcastAddr.sin_family = AF_INET;
-  inet_pton(AF_INET, "255.255.255.255", &(broadcastAddr.sin_addr));
-  broadcastAddr.sin_port = htons(port);
-  printf("Broadcasting to %s, port %d\n", inet_ntoa(broadcastAddr.sin_addr), ntohs(broadcastAddr.sin_port));
+  clientAddr.sin_family = AF_INET;
+  inet_pton(AF_INET, ip, &(clientAddr.sin_addr));
+  clientAddr.sin_port = htons(port);
+  printf("Broadcasting to %s, port %d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
   boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
@@ -61,7 +61,7 @@ void SmaccmInterpreter::sendFrame() {
       compressFrame();
       
       if (!sendto(socketfd, compressedPixels, compressedLength, 0,
-		  (struct sockaddr *)&broadcastAddr, sizeof(struct sockaddr_in))) {
+		  (struct sockaddr *)&clientAddr, sizeof(struct sockaddr_in))) {
 	perror("sendto");
       }
       

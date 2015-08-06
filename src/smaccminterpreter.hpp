@@ -26,10 +26,10 @@ class SmaccmInterpreter : public PixyInterpreter
 {
   public:
     SmaccmInterpreter();
-    int connect(int port);
+    int connect(char const *ip, int port);
 
   private:
-    struct sockaddr_in broadcastAddr;
+    struct sockaddr_in clientAddr;
     int socketfd;
 
     //image stuff

@@ -60,15 +60,19 @@ int main(int argc, char * argv[])
   uint16_t width, height, sentWidth, sentHeight;
   uint32_t numPixels;
 
+  char const *ip = "255.255.255.255";
   int port = 4000;
   if(argc >= 2) {
-    port = atoi(argv[1]);
+    ip = argv[1];
   }
   if(argc >= 3) {
-    vchan = atoi(argv[2]);
+    port = atoi(argv[2]);
+  }
+  if(argc >= 4) {
+    vchan = atoi(argv[3]);
   }
   
-  interpreter.connect(port);
+  interpreter.connect(ip, port);
 
   // Connect to Pixy
   pixy_init_status = pixy_init();
