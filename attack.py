@@ -37,7 +37,7 @@ system('killall -SIGINT demo')
 
 # Start rogue feed
 # Sleep to avoid contention over USB
-system('(sleep 3; ./demo 5000) &')
+system('(sleep 3; ./demo 255.255.255.255 5000) &')
 
 # Send animation on original feed
 i = 0
