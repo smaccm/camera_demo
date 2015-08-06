@@ -184,7 +184,9 @@ void Blobs::unpack()
 
     while(1)
     {
-        while (m_qq->dequeue(&qval)==0);
+        if (m_qq->dequeue(&qval)==0) {
+            break;
+        }
         if (qval==0xffffffff)
             break;
         i++;
