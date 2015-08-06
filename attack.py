@@ -26,10 +26,10 @@ s.bind(('', 0))
 s.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 
 # Send a few flashes        
-for i in range(0, 15):
+for i in range(0, 10):
     for j in range(0, i):
         s.sendto(images[0], ('255.255.255.255', 4000))
-    sleep((15 - i) / 30.0)
+    sleep((10 - i) / 30.0)
 
 # Kill the demo
 # Use SIGINT so it shuts down vchan
