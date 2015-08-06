@@ -31,7 +31,6 @@ int SmaccmInterpreter::connect(char const *ip, int port){
   inet_pton(AF_INET, ip, &(clientAddr.sin_addr));
   clientAddr.sin_port = htons(port);
   printf("Broadcasting to %s, port %d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
-  boost::thread frameSenderThread(boost::bind(&SmaccmInterpreter::sendFrame, this));
 }
 
 void SmaccmInterpreter::compressFrame(){
@@ -49,28 +48,6 @@ void SmaccmInterpreter::compressFrame(){
   memcpy(compressedPixels, compressedImage, jpegSize);
   compressedLength = jpegSize;
   tjFree(compressedImage);
-}
-
-void SmaccmInterpreter::sendFrame() {
-  boost::system::error_code ignored_error;
-  int fFrameSent = 0;
-  for(;;) {
-    if(fNewFrame) {
-      imageMutex.lock();
-      renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame);
-      compressFrame();
-      
-      if (!sendto(socketfd, compressedPixels, compressedLength, 0,
-                  (struct sockaddr *)&clientAddr, sizeof(struct sockaddr_in))) {
-        perror("sendto");
-      }
-      
-      fNewFrame = 0;
-      fFrameSent = 1;
-      imageMutex.unlock();
-    }
-    usleep(10000);
-  }
 }
 
 void SmaccmInterpreter::interpolateBayer(unsigned int width, unsigned int x, unsigned int y, unsigned char *pixel, unsigned int &r, unsigned int &g, unsigned int &b)
@@ -235,23 +212,24 @@ void SmaccmInterpreter::interpret_data(void * chirp_data[])
             printf("got CCB2\n");
              break;
           case FOURCC('C', 'M', 'V', '1'):
-            
-            if(imageMutex.try_lock()){
-              cmodelsLen = *(uint32_t *)chirp_data[2];
-              cmodels = (float *)chirp_data[3];
-              width = *(uint16_t *)chirp_data[4];
-              height = *(uint16_t *)chirp_data[5];
-              frame_len = *(uint32_t *)chirp_data[6];
-              pFrame = (uint8_t *)chirp_data[7];
-              assert(width == WIDTH);
-              assert(height == HEIGHT);
-              assert(frame_len = width*height);
-              
-              fNewFrame = 1;
-              imageMutex.unlock();
-            }else{
-              //printf("didn't get lock\n");
-            }
+	    cmodelsLen = *(uint32_t *)chirp_data[2];
+	    cmodels = (float *)chirp_data[3];
+	    width = *(uint16_t *)chirp_data[4];
+	    height = *(uint16_t *)chirp_data[5];
+	    frame_len = *(uint32_t *)chirp_data[6];
+	    pFrame = (uint8_t *)chirp_data[7];
+            assert(width == WIDTH);
+            assert(height == HEIGHT);
+            assert(frame_len = width*height);
+
+	    renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame);
+	    compressFrame();
+      
+	    if (!sendto(socketfd, compressedPixels, compressedLength, 0,
+			(struct sockaddr *)&clientAddr, sizeof(struct sockaddr_in))) {
+	      perror("sendto");
+	    }
+
             break;
           default:
             printf("libpixy: Chirp hint [%u] not recognized.\n", chirp_type);

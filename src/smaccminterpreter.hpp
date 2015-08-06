@@ -41,12 +41,6 @@ class SmaccmInterpreter : public PixyInterpreter
     //used for calculating blobs
     ProcessBlobs m_blobs;
 
-    //mutex for sending images
-    boost::mutex imageMutex;  
-
-    //global vars for receiving new frame
-    int fNewFrame;
-
     uint16_t width, height;
     uint32_t frame_len;
     uint8_t * pFrame;
@@ -61,7 +55,6 @@ class SmaccmInterpreter : public PixyInterpreter
     int renderCMV1(uint8_t renderFlags, uint32_t cmodelsLen, float *cmodels, uint16_t width, uint16_t height, uint32_t frameLen, uint8_t *frame); 
     void interpret_data(void * chirp_data[]);
 
-    void sendFrame(void);
     void compressFrame(void);
 };
 
