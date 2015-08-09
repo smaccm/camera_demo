@@ -133,7 +133,11 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
   }
 
   int blobIndex;
-  int ll, rr, tt, bb;
+
+  int ll = 0;
+  int rr = 0;
+  int tt = 0;
+  int bb = 0;
   int largestPerim = 0;
   for(blobIndex = 0; blobIndex < numBlobs; blobIndex++){
     int l, r, t, b;
@@ -181,7 +185,7 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
     }
   }
 
-  if(largestPerim != 0 && vchan){
+  if(vchan){
     send_blob(ll, rr, tt, bb);
   }
   return 0;
