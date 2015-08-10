@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.Arrays;
 
 import javax.imageio.ImageIO;
@@ -36,6 +37,7 @@ public class SmaccmViewer extends Thread {
 
 	private final int port;
 	private volatile Image image;
+	private JFrame frame;
 	private JPanel panel;
 
 	@Override
@@ -50,7 +52,7 @@ public class SmaccmViewer extends Thread {
 					int len = datagramPacket.getLength();
 					byte[] buf = Arrays.copyOf(packet, len);
 					image = ImageIO.read(new ByteArrayInputStream(buf));
-					refreshDisplay();
+					refreshDisplay(datagramPacket.getAddress());
 					displayFps();
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -64,10 +66,11 @@ public class SmaccmViewer extends Thread {
 		}
 	}
 
-	private void refreshDisplay() {
+	private void refreshDisplay(final InetAddress inetAddress) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
+				frame.setTitle("SMACCMcopter: " + inetAddress.getHostAddress());
 				panel.repaint();
 			}
 		});
@@ -89,8 +92,8 @@ public class SmaccmViewer extends Thread {
 
 	@SuppressWarnings("serial")
 	private void createUI() {
-		final JFrame frame = new JFrame();
-		frame.setTitle("SmaccmCopter Video");
+		frame = new JFrame();
+		frame.setTitle("SMACCMcopter");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 		frame.setSize(IMG_WIDTH, IMG_HEIGHT);

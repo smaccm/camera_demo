@@ -55,8 +55,8 @@ void SmaccmInterpreter::sendFrame() {
   boost::system::error_code ignored_error;
   int fFrameSent = 0;
   for(;;) {
+    imageMutex.lock();
     if(fNewFrame) {
-      imageMutex.lock();
       renderCMV1(0, cmodelsLen, cmodels, width, height, frame_len, pFrame);
       compressFrame();
       
@@ -67,8 +67,8 @@ void SmaccmInterpreter::sendFrame() {
       
       fNewFrame = 0;
       fFrameSent = 1;
-      imageMutex.unlock();
     }
+    imageMutex.unlock();
     usleep(10000);
   }
 }
