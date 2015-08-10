@@ -3,6 +3,7 @@ package com.rockwellcollins.atc.smaccmviewer;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.BindException;
@@ -92,11 +93,15 @@ public class SmaccmViewer extends Thread {
 
 	@SuppressWarnings("serial")
 	private void createUI() {
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		int width = screenSize.width / 2;
+		int height = width * IMG_HEIGHT / IMG_WIDTH;
+
 		frame = new JFrame();
 		frame.setTitle("SMACCMcopter");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
-		frame.setSize(IMG_WIDTH, IMG_HEIGHT);
+		frame.setSize(width, height);
 
 		panel = new JPanel() {
 			@Override
