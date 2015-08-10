@@ -867,7 +867,7 @@ int Chirp::service(bool all)
 
     for (i=0; true; i++)
     {
-        if (recvChirp(&type, &recvProc, args)==CRP_RES_OK)
+        if (recvChirp(&type, &recvProc, args, true)==CRP_RES_OK)
             handleChirp(type, recvProc, args);
         else
             break;
