@@ -122,6 +122,8 @@ int PixyInterpreter::send_command(const char * name, va_list args)
   if (procedure_id == -1) {
     // Request error //
     va_end(arguments);
+    // Mutual exclusion for receiver_ object (Unlock) //
+    chirp_access_mutex_.unlock();
     return PIXY_ERROR_INVALID_COMMAND;
   }
 
