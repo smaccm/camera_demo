@@ -87,14 +87,11 @@ int main(int argc, char * argv[])
   }
   
   printf("Starting camera\n");
-  int r = pixy_command("runprogArg", UINT8(8), UINT32(0), END, &response, END);
-  printf("Starting camera tracking (%d, %d)\n", r, response);
-  sleep(1);
-  r = pixy_command("runprogArg", UINT8(8), UINT32(1), END, &response, END);
-  printf("Camera tracking started (%d, %d)\n", r, response);
-  
-  int t = 0;
-  for(;;){
-    usleep(100000000);
+  pixy_command("runprogArg", UINT8(8), UINT32(0), END, &response, END);
+
+  printf("Starting camera tracking\n");
+  while (1) {
+    sleep(1);
+    pixy_command("runprogArg", UINT8(8), UINT32(1), END, &response, END);
   }
 }  
