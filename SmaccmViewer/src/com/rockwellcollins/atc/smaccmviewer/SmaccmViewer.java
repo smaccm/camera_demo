@@ -1,9 +1,13 @@
 package com.rockwellcollins.atc.smaccmviewer;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Image;
+import java.awt.GridBagLayout;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.BindException;
@@ -14,8 +18,11 @@ import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 public class SmaccmViewer extends Thread {
 	public static final int IMG_WIDTH = 320;
@@ -37,9 +44,14 @@ public class SmaccmViewer extends Thread {
 	}
 
 	private final int port;
-	private volatile Image image;
+	private volatile BufferedImage image;
+	private volatile boolean dimmed = false;
+
 	private JFrame frame;
 	private JPanel panel;
+	private JLabel label;
+
+	private double lastFrameMs;
 
 	@Override
 	public void run() {
@@ -53,6 +65,7 @@ public class SmaccmViewer extends Thread {
 					int len = datagramPacket.getLength();
 					byte[] buf = Arrays.copyOf(packet, len);
 					image = ImageIO.read(new ByteArrayInputStream(buf));
+					lastFrameMs = System.currentTimeMillis();
 					refreshDisplay(datagramPacket.getAddress());
 					displayFps();
 				} catch (IOException e) {
@@ -106,13 +119,61 @@ public class SmaccmViewer extends Thread {
 		panel = new JPanel() {
 			@Override
 			public void paintComponent(Graphics g) {
+				Dimension size = getSize();
+
+				double delay = (System.currentTimeMillis() - lastFrameMs) / 1000.0;
+				if (image != null && delay > 2.0) {
+					label.setVisible(true);
+					label.setText(String.format(" Connection lost: %.1fs ", delay));
+					double newSize = Math.min(size.getHeight() / 10, size.getWidth() / 20);
+					label.setFont(label.getFont().deriveFont((float) newSize));
+
+					if (!dimmed) {
+						dimImage();
+						dimmed = true;
+					}
+				} else {
+					dimmed = false;
+					label.setVisible(false);
+				}
+
 				if (image != null) {
-					Dimension size = getSize();
 					g.drawImage(image, 0, 0, size.width, size.height, 0, 0, IMG_WIDTH - 2,
 							IMG_HEIGHT - 2, null);
 				}
 			}
 		};
+
+		panel.setLayout(new GridBagLayout());
+		label = new JLabel();
+		label.setHorizontalAlignment(SwingConstants.CENTER);
+		label.setOpaque(true);
+		label.setForeground(Color.RED);
+		label.setBackground(Color.BLACK);
+		label.setVisible(false);
+		panel.add(label);
+
+		frame.setMinimumSize(new Dimension(IMG_WIDTH, IMG_HEIGHT));
+
+		// Auto-refresh for when connection is lost
+		new Timer(100, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				panel.repaint();
+			}
+		}).start();
+
 		frame.getContentPane().add(panel);
+	}
+
+	private void dimImage() {
+		for (int i = 0; i < image.getWidth(); i++) {
+			for (int j = 0; j < image.getHeight(); j++) {
+				Color c = new Color(image.getRGB(i, j));
+				int average = (c.getRed() + c.getGreen() + c.getBlue()) / 3;
+				Color newColor = new Color(average, average, average);
+				image.setRGB(i, j, newColor.getRGB());
+			}
+		}
 	}
 }
