@@ -17,6 +17,7 @@ import java.net.InetAddress;
 import java.util.Arrays;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -124,9 +125,10 @@ public class SmaccmViewer extends Thread {
 				double delay = (System.currentTimeMillis() - lastFrameMs) / 1000.0;
 				if (image != null && delay > 2.0) {
 					label.setVisible(true);
-					label.setText(String.format(" Connection lost: %.1fs ", delay));
+					label.setText(String.format("<html><font face='monospace'>&nbsp;Connection lost: %.1fs&nbsp;</font></html>", delay));
 					double newSize = Math.min(size.getHeight() / 10, size.getWidth() / 20);
 					label.setFont(label.getFont().deriveFont((float) newSize));
+					label.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.RED));
 
 					if (!dimmed) {
 						dimImage();
