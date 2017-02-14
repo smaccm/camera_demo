@@ -21,24 +21,12 @@
 #include <iostream>
 #include "pixy.h"
 #include "smaccminterpreter.hpp"
-#include "vchan_code/vchan_blob_interface.h"
+#include "bbox.h"
 
 #define BLOCK_BUFFER_SIZE    25
 
 // Pixy Block buffer // 
 struct Block blocks[BLOCK_BUFFER_SIZE];
-
-int vchan = 1;
-
-void handle_SIGINT(int unused)
-{
-  // On CTRL+C - abort! //
-  printf("Caught SIGINT\n");
-  if (vchan) {
-    vchan_close();
-  }
-  exit(0);
-}
 
 //defined in pixy.cpp
 extern SmaccmInterpreter interpreter;
@@ -48,9 +36,6 @@ int main(int argc, char * argv[])
   int index;
   int blocks_copied;
   int pixy_init_status;
-
-  // Catch CTRL+C (SIGINT) signals
-  signal(SIGINT, handle_SIGINT);
 
   printf("Hello Pixy:\n libpixyusb Version: %s\n", __LIBPIXY_VERSION__);
 
@@ -67,9 +52,6 @@ int main(int argc, char * argv[])
   }
   if(argc >= 3) {
     port = atoi(argv[2]);
-  }
-  if(argc >= 4) {
-    vchan = atoi(argv[3]);
   }
   
   interpreter.connect(ip, port);

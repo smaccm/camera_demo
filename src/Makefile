@@ -11,10 +11,7 @@ LIBS=$(LIB_INCLUDES) -lusb-1.0 -lboost_chrono -lboost_system -lboost_thread -pth
 
 all: demo
 
-vchan_test: vchan_blob_test.o vchan_blob_interface.o sel4libvchan.o
-	$(CXX) $^ -o vchan_test
-
-demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o timer.o blob.o blobs.o colorlut.o processblobs.o qqueue.o sel4libvchan.o vchan_blob_interface.o
+demo: chirp.o chirpreceiver.o demo.o pixy.o pixyinterpreter.o smaccminterpreter.o usblink.o timer.o blob.o blobs.o colorlut.o processblobs.o qqueue.o bbox.o
 	$(CXX) $^ $(LIBS) -o demo
 
 smaccminterpreter.o: smaccminterpreter.cpp
@@ -56,14 +53,8 @@ processblobs.o: blobstuff/processblobs.cpp
 qqueue.o: blobstuff/qqueue.cpp
 	$(CXX) $(CFLAGS) blobstuff/qqueue.cpp
 
-vchan_blob_interface.o: vchan_code/vchan_blob_interface.c
-	$(CC) $(CFLAGS) vchan_code/vchan_blob_interface.c
-
-sel4libvchan.o: vchan_code/sel4libvchan.c
-	$(CC) $(CFLAGS) vchan_code/sel4libvchan.c
-
-vchan_blob_test.o: vchan_code/vchan_blob_test.c
-	$(CXX) $(CFLAGS) vchan_code/vchan_blob_test.c
+bbox.o: bbox.c
+	$(CXX) $(CFLAGS) bbox.c
 
 clean:
-	rm -f *.o demo vchan_test
+	rm -f *.o demo

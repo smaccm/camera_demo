@@ -2,9 +2,6 @@
 
 #define PACKET_SIZE 65000
 
-// defined in demo.cpp
-extern int vchan;
-
 SmaccmInterpreter::SmaccmInterpreter() : 
   m_blobs() {
 }
@@ -20,11 +17,6 @@ int SmaccmInterpreter::connect(char const *ip, int port){
                  sizeof(broadcastPermission)) < 0) {
     perror("setsockopt() failed");
     exit(0);
-  }
-  
-  // initiate vchan
-  if (vchan) {
-    vchan_init();
   }
   
   clientAddr.sin_family = AF_INET;
@@ -162,9 +154,8 @@ int SmaccmInterpreter::renderBA81(uint16_t width, uint16_t height, uint8_t *fram
     }
   }
 
-  if(vchan){
-    send_blob(ll, rr, tt, bb);
-  }
+  // Note that bbox top/bottom is inverted from blobs
+  write_bbox(ll, rr, tt, bb);
   return 0;
 }
 

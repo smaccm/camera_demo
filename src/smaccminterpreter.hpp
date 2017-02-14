@@ -11,7 +11,7 @@
 #include <iostream>
 #include <turbojpeg.h>
 #include "blobstuff/processblobs.h"
-#include "vchan_code/vchan_blob_interface.h"
+#include "bbox.h"
 
 #ifndef __SMACCMINTERPRETER_HPP__
 #define __SMACCMINTERPRETER_HPP__
