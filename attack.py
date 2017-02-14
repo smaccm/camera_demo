@@ -38,8 +38,7 @@ for i in range(0, 10):
     sleep((10 - i) / 30.0)
 
 # Kill the demo
-# Use SIGINT so it shuts down vchan
-system('killall -SIGINT demo')
+system('pkill demo')
 
 # Start rogue feed
 # Sleep to avoid contention over USB
