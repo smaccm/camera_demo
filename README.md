@@ -1,7 +1,7 @@
 Camera Demo
 ===========
 
-Software for the SMACCM Phase 2 Camera Demo.
+Software for the SMACCM Camera Demo.
 
 
 Build Instructions
@@ -24,10 +24,9 @@ Running
 =======
 
 Server: run `demo` to start the server. The full options are
-```demo [ip] [port] [vchan]```
+```demo [ip] [port]```
 The default ip is `255.255.255.255` (broadcast). The default port is
-4000. The default vchan is 1 which enables the vchan; use 0 to disable
-the vchan.
+4000.
 
 Client: run `java -jar SmaccmViewer.jar`. The full options are
 ```java -jar SmaccmViewer.jar [port]```
