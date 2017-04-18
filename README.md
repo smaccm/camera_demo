@@ -19,6 +19,7 @@ sudo apt-get install libboost-chrono-dev \
 
 Run `make`.
 
+The Pixy cam needs a special firmware - upload [firmware-1.0.2beta.hex](https://github.com/smaccm/camera_demo/blob/master/notes/firmware-1.0.2beta.hex) using [PixyMon](https://github.com/charmedlabs/pixy) app.
 
 Running
 =======
